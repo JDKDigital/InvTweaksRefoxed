@@ -1,15 +1,14 @@
 package invtweaks.util;
 
-// import java.lang.reflect.*;
-
 import com.google.common.base.Equivalence;
 import com.google.common.collect.Streams;
 import it.unimi.dsi.fastutil.ints.IntArrays;
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
-import net.minecraft.inventory.container.Slot;
-import net.minecraft.item.ItemStack;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.items.ItemHandlerHelper;
 import net.minecraftforge.items.ItemStackHandler;
+import net.minecraftforge.registries.ForgeRegistries;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.*;
@@ -17,9 +16,12 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-// import net.minecraftforge.fml.common.*;
 
 public class Utils {
+    private Utils() {
+        // nothing to do
+    }
+
     public static final Equivalence<ItemStack> STACKABLE =
             new Equivalence<ItemStack>() {
 
@@ -43,7 +45,7 @@ public class Utils {
             };
     // TODO improve fallback comparator
     public static final Comparator<ItemStack> FALLBACK_COMPARATOR =
-            Comparator.comparing(is -> is.getItem().getRegistryName());
+            Comparator.comparing(is -> ForgeRegistries.ITEMS.getKey(is.getItem()));
 
     public static int gridToPlayerSlot(int row, int col) {
         if (row < 0 || row >= 4 || col < 0 || col >= 9) {
@@ -152,7 +154,6 @@ public class Utils {
 
     public static <T extends Collection<ItemStack>> T collated(
             Iterable<ItemStack> iterable, Supplier<T> collSupp) {
-        //noinspection UnstableApiUsage
         Map<Equivalence.Wrapper<ItemStack>, List<ItemStack>> mapping =
                 Streams.stream(iterable)
                         .collect(
@@ -167,7 +168,6 @@ public class Utils {
      */
     public static Map<Equivalence.Wrapper<ItemStack>, Set<Slot>> gatheredSlots(
             Iterable<Slot> iterable) {
-        //noinspection UnstableApiUsage
         return Streams.stream(iterable)
                 .collect(
                         Collectors.groupingBy(
@@ -176,7 +176,6 @@ public class Utils {
                                 Collectors.toCollection(ObjectLinkedOpenHashSet::new)));
     }
 
-    // @SuppressWarnings("unchecked")
     public static List<ItemStack> condensed(Iterable<ItemStack> iterable) {
         List<ItemStack> coll = collated(iterable, ArrayList::new);
         // TODO special handling for Nether Chests-esque mods?
@@ -191,6 +190,6 @@ public class Utils {
         return IntStream.range(0, stackBuffer.getSlots())
                 .mapToObj(stackBuffer::getStackInSlot)
                 .filter(is -> !is.isEmpty())
-                .collect(Collectors.toList());
+                .collect(Collectors.toCollection(ArrayList::new));
     }
 }

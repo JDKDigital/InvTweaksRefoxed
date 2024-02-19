@@ -1,10 +1,10 @@
-package invtweaks.packets;
+package invtweaks.network;
 
 import com.electronwill.nightconfig.core.CommentedConfig;
 import com.electronwill.nightconfig.core.UnmodifiableConfig;
 import invtweaks.config.InvTweaksConfig;
-import net.minecraft.network.PacketBuffer;
-import net.minecraftforge.fml.network.NetworkEvent;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraftforge.network.NetworkEvent;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -34,7 +34,7 @@ public class PacketUpdateConfig {
         this.contOverrides = contOverrides;
     }
 
-    public PacketUpdateConfig(PacketBuffer buf) {
+    public PacketUpdateConfig(FriendlyByteBuf buf) {
         this.cats = new ArrayList<>();
         int catsSize = buf.readVarInt();
         for (int i = 0; i < catsSize; ++i) {
@@ -85,7 +85,7 @@ public class PacketUpdateConfig {
         ctx.get().setPacketHandled(true);
     }
 
-    public void encode(PacketBuffer buf) {
+    public void encode(FriendlyByteBuf buf) {
         buf.writeVarInt(cats.size());
         for (UnmodifiableConfig subCfg : cats) {
             buf.writeUtf(subCfg.getOrElse("name", ""));

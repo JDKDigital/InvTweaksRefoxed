@@ -1,11 +1,12 @@
 package invtweaks.jei;
 
 import invtweaks.InvTweaksMod;
-import mcp.MethodsReturnNonnullByDefault;
+import invtweaks.events.ClientEvents;
 import mezz.jei.api.IModPlugin;
 import mezz.jei.api.JeiPlugin;
 import mezz.jei.api.runtime.IJeiRuntime;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.MethodsReturnNonnullByDefault;
+import net.minecraft.resources.ResourceLocation;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 
@@ -23,7 +24,6 @@ public class InvTweaksJEI implements IModPlugin {
 
     @Override
     public void onRuntimeAvailable(IJeiRuntime jeiRuntime) {
-        InvTweaksMod.setJEIKeyboardActiveFn(
-                () -> jeiRuntime.getIngredientListOverlay().hasKeyboardFocus());
+        ClientEvents.setJEIKeyboardActiveFn(() -> jeiRuntime.getIngredientListOverlay().hasKeyboardFocus());
     }
 }

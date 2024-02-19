@@ -6,33 +6,46 @@ import com.electronwill.nightconfig.core.file.CommentedFileConfig;
 import com.electronwill.nightconfig.core.io.WritingMode;
 import com.google.common.collect.ImmutableMap;
 import invtweaks.InvTweaksMod;
-import invtweaks.packets.PacketUpdateConfig;
+import invtweaks.network.PacketUpdateConfig;
 import invtweaks.util.Utils;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.ints.IntLists;
+import net.minecraft.ResourceLocationException;
 import net.minecraft.client.Minecraft;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.BlockItem;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.tags.BlockTags;
-import net.minecraft.tags.ItemTags;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.ResourceLocationException;
-import net.minecraft.util.concurrent.ThreadTaskExecutor;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.TagKey;
+import net.minecraft.util.thread.BlockableEventLoop;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.block.Block;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.ForgeConfigSpec;
+import net.minecraftforge.common.util.LogicalSidedProvider;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.LogicalSide;
-import net.minecraftforge.fml.LogicalSidedProvider;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.config.ModConfig;
+import net.minecraftforge.fml.event.config.ModConfigEvent;
+import net.minecraftforge.registries.ForgeRegistries;
 
 import javax.annotation.Nullable;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -57,13 +70,13 @@ public class InvTweaksConfig {
                             new Category(
                                     String.format(
                                             "/instanceof:net.minecraft.item.Food; !%s; !%s; !%s; !%s",
-                                            Items.ROTTEN_FLESH.getRegistryName(),
-                                            Items.SPIDER_EYE.getRegistryName(),
-                                            Items.POISONOUS_POTATO.getRegistryName(),
-                                            Items.PUFFERFISH.getRegistryName())))
+                                            ForgeRegistries.ITEMS.getKey(Items.ROTTEN_FLESH),
+                                            ForgeRegistries.ITEMS.getKey(Items.SPIDER_EYE),
+                                            ForgeRegistries.ITEMS.getKey(Items.POISONOUS_POTATO),
+                                            ForgeRegistries.ITEMS.getKey(Items.PUFFERFISH))))
                     .put(
                             "torch",
-                            new Category(Objects.requireNonNull(Items.TORCH.getRegistryName()).toString()))
+                            new Category(ForgeRegistries.ITEMS.getKey(Items.TORCH).toString()))
                     .put("cheapBlocks", new Category("/tag:minecraft:cobblestone", "/tag:minecraft:dirt"))
                     .put("blocks", new Category("/instanceof:net.minecraft.item.BlockItem"))
                     .build();
@@ -214,16 +227,16 @@ public class InvTweaksConfig {
 
     @SuppressWarnings("unused")
     @SubscribeEvent
-    public static void onLoad(final ModConfig.Loading configEvent) {
-        ThreadTaskExecutor<?> executor = LogicalSidedProvider.WORKQUEUE.get(LogicalSide.CLIENT);
-        executor.submit(() -> setDirty(true));
+    public static void onLoad(final ModConfigEvent.Loading configEvent) {
+        BlockableEventLoop<?> executor = LogicalSidedProvider.WORKQUEUE.get(LogicalSide.CLIENT);
+        executor.submitAsync(() -> setDirty(true));
     }
 
     @SuppressWarnings("unused")
     @SubscribeEvent
-    public static void onReload(final ModConfig.Reloading configEvent) {
-        ThreadTaskExecutor<?> executor = LogicalSidedProvider.WORKQUEUE.get(LogicalSide.CLIENT);
-        executor.submit(() -> setDirty(true));
+    public static void onReload(final ModConfigEvent.Reloading configEvent) {
+        BlockableEventLoop<?> executor = LogicalSidedProvider.WORKQUEUE.get(LogicalSide.CLIENT);
+        executor.submitAsync(() -> setDirty(true));
     }
 
     public static boolean isDirty() {
@@ -265,15 +278,15 @@ public class InvTweaksConfig {
         spec.setConfig(configData);
     }
 
-    public static void setPlayerCats(PlayerEntity ent, Map<String, Category> cats) {
+    public static void setPlayerCats(Player ent, Map<String, Category> cats) {
         playerToCats.put(ent.getUUID(), cats);
     }
 
-    public static void setPlayerRules(PlayerEntity ent, Ruleset ruleset) {
+    public static void setPlayerRules(Player ent, Ruleset ruleset) {
         playerToRules.put(ent.getUUID(), ruleset);
     }
 
-    public static void setPlayerAutoRefill(PlayerEntity ent, boolean autoRefill) {
+    public static void setPlayerAutoRefill(Player ent, boolean autoRefill) {
         if (autoRefill) {
             playerAutoRefill.add(ent.getUUID());
         } else {
@@ -281,11 +294,11 @@ public class InvTweaksConfig {
         }
     }
 
-    public static void setPlayerContOverrides(PlayerEntity ent, Map<String, ContOverride> val) {
+    public static void setPlayerContOverrides(Player ent, Map<String, ContOverride> val) {
         playerToContOverrides.put(ent.getUUID(), val);
     }
 
-    public static Map<String, Category> getPlayerCats(PlayerEntity ent) {
+    public static Map<String, Category> getPlayerCats(Player ent) {
         if (DistExecutor.unsafeCallWhenOn(Dist.CLIENT, () -> () -> ent == Minecraft.getInstance().player)
                 == Boolean.TRUE) {
             return getSelfCompiledCats();
@@ -293,7 +306,7 @@ public class InvTweaksConfig {
         return playerToCats.getOrDefault(ent.getUUID(), DEFAULT_CATS);
     }
 
-    public static Ruleset getPlayerRules(PlayerEntity ent) {
+    public static Ruleset getPlayerRules(Player ent) {
         if (DistExecutor.unsafeCallWhenOn(Dist.CLIENT, () -> () -> ent == Minecraft.getInstance().player)
                 == Boolean.TRUE) {
             return getSelfCompiledRules();
@@ -301,7 +314,7 @@ public class InvTweaksConfig {
         return playerToRules.getOrDefault(ent.getUUID(), DEFAULT_RULES);
     }
 
-    public static boolean getPlayerAutoRefill(PlayerEntity ent) {
+    public static boolean getPlayerAutoRefill(Player ent) {
         if (DistExecutor.unsafeCallWhenOn(Dist.CLIENT, () -> () -> ent == Minecraft.getInstance().player)
                 == Boolean.TRUE) {
             return ENABLE_AUTOREFILL.get();
@@ -309,7 +322,7 @@ public class InvTweaksConfig {
         return playerAutoRefill.contains(ent.getUUID());
     }
 
-    public static Map<String, ContOverride> getPlayerContOverrides(PlayerEntity ent) {
+    public static Map<String, ContOverride> getPlayerContOverrides(Player ent) {
         if (DistExecutor.unsafeCallWhenOn(Dist.CLIENT, () -> () -> ent == Minecraft.getInstance().player)
                 == Boolean.TRUE) {
             return getSelfCompiledContOverrides();
@@ -384,16 +397,13 @@ public class InvTweaksConfig {
 
             String[] parts = clause.split(":", 2);
             if (parts[0].equals("/tag")) {
-                return Optional.of(
-                        st ->
-                                (Optional.ofNullable(ItemTags.getAllTags().getTag(new ResourceLocation(parts[1])))
-                                        .filter(tg -> st.getItem().is(tg))
-                                        .isPresent()
-                                        || (st.getItem() instanceof BlockItem
-                                        && Optional.ofNullable(
-                                        BlockTags.getAllTags().getTag(new ResourceLocation(parts[1])))
-                                        .filter(tg -> ((BlockItem) st.getItem()).getBlock().is(tg))
-                                        .isPresent())));
+                TagKey<Item> itemKey = TagKey.create(ForgeRegistries.ITEMS.getRegistryKey(), new ResourceLocation(parts[1]));
+                TagKey<Block> blockKey = TagKey.create(ForgeRegistries.BLOCKS.getRegistryKey(), new ResourceLocation(parts[1]));
+
+                return Optional.of(stack -> stack.is(itemKey) || (
+                            stack.getItem() instanceof BlockItem blockItem
+                            && blockItem.getBlock().defaultBlockState().is(blockKey))
+                );
             } else if (parts[0].equals("/instanceof")
                     || parts[0].equals("/class")) { // use this for e.g. pickaxes
                 try {
@@ -410,7 +420,7 @@ public class InvTweaksConfig {
             } else { // default to standard item checking
                 try {
                     return Optional.of(
-                            st -> Objects.equals(st.getItem().getRegistryName(), new ResourceLocation(clause)));
+                            st -> Objects.equals(ForgeRegistries.ITEMS.getKey(st.getItem()), new ResourceLocation(clause)));
                 } catch (ResourceLocationException e) {
                     InvTweaksMod.LOGGER.warn("Invalid item resource location found.");
                     return Optional.empty();

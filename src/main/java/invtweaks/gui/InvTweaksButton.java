@@ -1,15 +1,10 @@
 package invtweaks.gui;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
 import invtweaks.InvTweaksMod;
-import net.minecraft.client.Minecraft;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.util.text.StringTextComponent;
-import net.minecraftforge.fml.client.gui.widget.ExtendedButton;
-
-import javax.annotation.ParametersAreNonnullByDefault;
-
-import net.minecraft.client.gui.widget.button.Button.IPressable;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraftforge.client.gui.widget.ExtendedButton;
 
 public class InvTweaksButton extends ExtendedButton {
     protected static final ResourceLocation button =
@@ -17,23 +12,20 @@ public class InvTweaksButton extends ExtendedButton {
     private final int tx;
     private final int ty;
 
-    public InvTweaksButton(int x, int y, int tx, int ty, IPressable handler) {
-        super(x, y, 14, 16, new StringTextComponent(""), handler);
+    public InvTweaksButton(int x, int y, int tx, int ty, OnPress handler) {
+        super(x, y, 14, 16, Component.empty(), handler);
         this.tx = tx;
         this.ty = ty;
     }
 
     @Override
-    @ParametersAreNonnullByDefault
-    public void render(MatrixStack matrixStack, int mouseX, int mouseY, float partialTicks) {
-        isHovered =
-                this.active
+    public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
+        isHovered = this.active
                         && this.visible
-                        && mouseX >= this.x
-                        && mouseY >= this.y
-                        && mouseX < this.x + this.width
-                        && mouseY < this.y + this.height;
-        Minecraft.getInstance().getTextureManager().bind(button);
-        blit(matrixStack, x, y, tx, ty + (isHovered ? 16 : 0), 14, 16);
+                        && mouseX >= this.getX()
+                        && mouseY >= this.getY()
+                        && mouseX < this.getX() + this.width
+                        && mouseY < this.getY() + this.height;
+        graphics.blit(button, getX(), getY(), tx, ty + (isHovered ? 16 : 0), 14, 16);
     }
 }
