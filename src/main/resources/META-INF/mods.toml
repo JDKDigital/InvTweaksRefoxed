@@ -17,11 +17,11 @@ modId="invtweaks" #mandatory
 # The version number of the mod - there's a few well known ${} variables useable here or just hardcode it
 version="${file.jarVersion}" #mandatory
 # A display name for the mod
-displayName="Inventory Tweaks Renewed" #mandatory
+displayName="Inventory Tweaks Refoxed" #mandatory
 # A URL to query for updates for this mod. See the JSON update specification <here>
 # updateJSONURL="http://myurl.me/" #TODO add?
 # A URL for the "homepage" for this mod, displayed in the mod UI
-displayURL="https://www.curseforge.com/minecraft/mc-mods/inventory-tweaks-renewed"
+displayURL="https://www.curseforge.com/minecraft/mc-mods/inventory-tweaks-refoxed"
 # A file name (in the root of the mod JAR) containing a logo for display
 logoFile="logo.png"
 # A text field displayed in the mod UI
@@ -60,8 +60,8 @@ Inventory Tweaks, but for modern versions of Minecraft.
     ordering="NONE"
     side="BOTH"
 [[dependencies.invtweaks]]
-	modId="jei"
-	mandatory=false
-	versionRange="[jei-1.20.1-forge-15.2.0.27,)"
-	ordering="AFTER"
-	side="BOTH"
+    modId="jei"
+    mandatory=false
+    versionRange="[jei-1.20.1-forge-15.2.0.27,)"
+    ordering="AFTER"
+    side="BOTH"
