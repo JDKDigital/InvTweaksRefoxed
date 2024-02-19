@@ -2,25 +2,25 @@ package invtweaks.events;
 
 import invtweaks.InvTweaksMod;
 import invtweaks.config.InvTweaksConfig;
-import invtweaks.network.NetworkDispatcher;
 import invtweaks.util.ClientUtils;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
-import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.stats.Stats;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.common.capabilities.ForgeCapabilities;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.entity.EntityJoinLevelEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.LogicalSide;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.LogicalSide;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.neoforge.capabilities.Capabilities;
+import net.neoforged.neoforge.event.TickEvent;
+import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
+import net.neoforged.neoforge.items.IItemHandler;
+import net.neoforged.neoforge.network.PacketDistributor;
 
 import java.util.Collections;
 import java.util.EnumMap;
@@ -72,7 +72,7 @@ public class ServerEvents {
             }
         } else {
             if (InvTweaksConfig.isDirty()) {
-                if (ClientUtils.serverConnectionExists()) NetworkDispatcher.INSTANCE.sendToServer(InvTweaksConfig.getSyncPacket());
+                if (ClientUtils.serverConnectionExists()) PacketDistributor.SERVER.noArg().send(InvTweaksConfig.getSyncPacket());
                 InvTweaksConfig.setDirty(false);
             }
         }
@@ -99,20 +99,19 @@ public class ServerEvents {
         }
 
         // thank Simon for the flattening
-        ent.getCapability(ForgeCapabilities.ITEM_HANDLER, Direction.UP)
-                .ifPresent(
-                        cap -> {
-                            for (int i = 0; i < cap.getSlots(); ++i) {
-                                if (Collections.binarySearch(frozen, i) >= 0) {
-                                    continue; // ignore frozen slot
-                                }
-                                ItemStack cand = cap.extractItem(i, Integer.MAX_VALUE, true).copy();
-                                if (cand.getItem() == item) {
-                                    cap.extractItem(i, Integer.MAX_VALUE, false);
-                                    ent.setItemInHand(hand, cand);
-                                    break;
-                                }
-                            }
-                        });
+        IItemHandler cap = ent.getCapability(Capabilities.ItemHandler.ENTITY);
+        if (cap != null) {
+            for (int i = 0; i < cap.getSlots(); ++i) {
+                if (Collections.binarySearch(frozen, i) >= 0) {
+                    continue; // ignore frozen slot
+                }
+                ItemStack cand = cap.extractItem(i, Integer.MAX_VALUE, true).copy();
+                if (cand.getItem() == item) {
+                    cap.extractItem(i, Integer.MAX_VALUE, false);
+                    ent.setItemInHand(hand, cand);
+                    break;
+                }
+            }
+        }
     }
 }

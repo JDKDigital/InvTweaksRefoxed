@@ -3,35 +3,33 @@ package invtweaks.network;
 import invtweaks.InvTweaksMod;
 import invtweaks.util.Sorting;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
+import net.neoforged.neoforge.network.handling.PlayPayloadContext;
 
+public record PacketSortInv(boolean isPlayer) implements CustomPacketPayload {
+    public static final ResourceLocation ID = new ResourceLocation(InvTweaksMod.MODID, "packet_sort_inv");
 
-import java.util.function.Supplier;
-
-public class PacketSortInv {
-    private final boolean isPlayer;
-
-    public PacketSortInv(boolean isPlayer) {
-        this.isPlayer = isPlayer;
-    }
-
-    public PacketSortInv(FriendlyByteBuf buf) {
+    public PacketSortInv(final FriendlyByteBuf buf) {
         this(buf.readBoolean());
     }
 
-    public void handle(Supplier<NetworkEvent.Context> ctx) {
-        ctx.get().enqueueWork(() -> {
-            try {
-                Sorting.executeSort(ctx.get().getSender(), isPlayer);
-            } catch (Exception e) {
-                // can potentially throw exceptions which are silenced by enqueueWork
-                InvTweaksMod.LOGGER.error("Failed to sort inventory", e);
-            }
-        });
-        ctx.get().setPacketHandled(true);
+    public static void handle(final PacketSortInv packet, final PlayPayloadContext ctx) {
+        ctx.workHandler()
+                .submitAsync(() -> ctx.player().ifPresent(p -> Sorting.executeSort(p, packet.isPlayer)))
+                .exceptionally(e -> {
+                    InvTweaksMod.LOGGER.error("Failed to sort inventory", e);
+                    return null;
+                });
     }
 
-    public void encode(FriendlyByteBuf buf) {
+    @Override
+    public void write(final FriendlyByteBuf buf) {
         buf.writeBoolean(isPlayer);
+    }
+
+    @Override
+    public ResourceLocation id() {
+        return ID;
     }
 }

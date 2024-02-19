@@ -6,7 +6,6 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import invtweaks.InvTweaksMod;
 import invtweaks.config.InvTweaksConfig;
 import invtweaks.gui.InvTweaksButtonSort;
-import invtweaks.network.NetworkDispatcher;
 import invtweaks.network.PacketSortInv;
 import invtweaks.util.ClientUtils;
 import invtweaks.util.Sorting;
@@ -24,13 +23,14 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.CraftingContainer;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.RenderGuiOverlayEvent;
-import net.minecraftforge.client.event.ScreenEvent;
-import net.minecraftforge.client.gui.overlay.VanillaGuiOverlay;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.items.ItemHandlerHelper;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.neoforge.client.event.RenderGuiOverlayEvent;
+import net.neoforged.neoforge.client.event.ScreenEvent;
+import net.neoforged.neoforge.client.gui.overlay.VanillaGuiOverlay;
+import net.neoforged.neoforge.items.ItemHandlerHelper;
+import net.neoforged.neoforge.network.PacketDistributor;
 
 import javax.annotation.Nullable;
 import java.util.Collection;
@@ -53,7 +53,7 @@ public class ClientEvents {
 
     private static void requestSort(boolean isPlayer) {
         if (ClientUtils.serverConnectionExists()) {
-            NetworkDispatcher.INSTANCE.sendToServer(new PacketSortInv(isPlayer));
+            PacketDistributor.SERVER.noArg().send(new PacketSortInv(isPlayer));
         } else {
             Sorting.executeSort(ClientUtils.safeGetPlayer(), isPlayer);
         }

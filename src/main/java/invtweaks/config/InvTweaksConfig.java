@@ -12,7 +12,7 @@ import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.ints.IntLists;
 import net.minecraft.ResourceLocationException;
-import net.minecraft.client.Minecraft;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.util.thread.BlockableEventLoop;
@@ -22,15 +22,13 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Block;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.common.ForgeConfigSpec;
-import net.minecraftforge.common.util.LogicalSidedProvider;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.DistExecutor;
-import net.minecraftforge.fml.LogicalSide;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.event.config.ModConfigEvent;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.LogicalSide;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.event.config.ModConfigEvent;
+import net.neoforged.fml.loading.FMLEnvironment;
+import net.neoforged.neoforge.common.ModConfigSpec;
+import net.neoforged.neoforge.common.util.LogicalSidedProvider;
 
 import javax.annotation.Nullable;
 import java.nio.file.Path;
@@ -52,7 +50,7 @@ import java.util.stream.IntStream;
 
 @Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD)
 public class InvTweaksConfig {
-    public static final ForgeConfigSpec CLIENT_CONFIG;
+    public static final ModConfigSpec CLIENT_CONFIG;
     /**
      * Sentinel to indicate that the GUI position should be left alone.
      */
@@ -70,13 +68,13 @@ public class InvTweaksConfig {
                             new Category(
                                     String.format(
                                             "/instanceof:net.minecraft.item.Food; !%s; !%s; !%s; !%s",
-                                            ForgeRegistries.ITEMS.getKey(Items.ROTTEN_FLESH),
-                                            ForgeRegistries.ITEMS.getKey(Items.SPIDER_EYE),
-                                            ForgeRegistries.ITEMS.getKey(Items.POISONOUS_POTATO),
-                                            ForgeRegistries.ITEMS.getKey(Items.PUFFERFISH))))
+                                            BuiltInRegistries.ITEM.getKey(Items.ROTTEN_FLESH),
+                                            BuiltInRegistries.ITEM.getKey(Items.SPIDER_EYE),
+                                            BuiltInRegistries.ITEM.getKey(Items.POISONOUS_POTATO),
+                                            BuiltInRegistries.ITEM.getKey(Items.PUFFERFISH))))
                     .put(
                             "torch",
-                            new Category(ForgeRegistries.ITEMS.getKey(Items.TORCH).toString()))
+                            new Category(BuiltInRegistries.ITEM.getKey(Items.TORCH).toString()))
                     .put("cheapBlocks", new Category("/tag:minecraft:cobblestone", "/tag:minecraft:dirt"))
                     .put("blocks", new Category("/instanceof:net.minecraft.item.BlockItem"))
                     .build();
@@ -95,13 +93,13 @@ public class InvTweaksConfig {
 
                     .build();
 
-    private static final ForgeConfigSpec.ConfigValue<List<? extends UnmodifiableConfig>> CATS;
-    private static final ForgeConfigSpec.ConfigValue<List<? extends String>> RULES;
-    private static final ForgeConfigSpec.BooleanValue ENABLE_AUTOREFILL;
-    private static final ForgeConfigSpec.BooleanValue ENABLE_QUICKVIEW;
-    private static final ForgeConfigSpec.IntValue ENABLE_SORT;
-    private static final ForgeConfigSpec.IntValue ENABLE_BUTTONS;
-    private static final ForgeConfigSpec.ConfigValue<List<? extends UnmodifiableConfig>>
+    private static final ModConfigSpec.ConfigValue<List<? extends UnmodifiableConfig>> CATS;
+    private static final ModConfigSpec.ConfigValue<List<? extends String>> RULES;
+    private static final ModConfigSpec.BooleanValue ENABLE_AUTOREFILL;
+    private static final ModConfigSpec.BooleanValue ENABLE_QUICKVIEW;
+    private static final ModConfigSpec.IntValue ENABLE_SORT;
+    private static final ModConfigSpec.IntValue ENABLE_BUTTONS;
+    private static final ModConfigSpec.ConfigValue<List<? extends UnmodifiableConfig>>
             CONT_OVERRIDES;
     private static final Map<UUID, Map<String, Category>> playerToCats = new HashMap<>();
     private static final Map<UUID, Ruleset> playerToRules = new HashMap<>();
@@ -113,7 +111,7 @@ public class InvTweaksConfig {
     private static boolean isDirty = false;
 
     static {
-        ForgeConfigSpec.Builder builder = new ForgeConfigSpec.Builder();
+        ModConfigSpec.Builder builder = new ModConfigSpec.Builder();
 
         {
             builder.comment("Sorting customization").push("sorting");
@@ -266,7 +264,7 @@ public class InvTweaksConfig {
         return COMPILED_CONT_OVERRIDES;
     }
 
-    public static void loadConfig(ForgeConfigSpec spec, Path path) {
+    public static void loadConfig(ModConfigSpec spec, Path path) {
         final CommentedFileConfig configData =
                 CommentedFileConfig.builder(path)
                         .sync()
@@ -299,32 +297,28 @@ public class InvTweaksConfig {
     }
 
     public static Map<String, Category> getPlayerCats(Player ent) {
-        if (DistExecutor.unsafeCallWhenOn(Dist.CLIENT, () -> () -> ent == Minecraft.getInstance().player)
-                == Boolean.TRUE) {
+        if (FMLEnvironment.dist.isClient()) {
             return getSelfCompiledCats();
         }
         return playerToCats.getOrDefault(ent.getUUID(), DEFAULT_CATS);
     }
 
     public static Ruleset getPlayerRules(Player ent) {
-        if (DistExecutor.unsafeCallWhenOn(Dist.CLIENT, () -> () -> ent == Minecraft.getInstance().player)
-                == Boolean.TRUE) {
+        if (FMLEnvironment.dist.isClient()) {
             return getSelfCompiledRules();
         }
         return playerToRules.getOrDefault(ent.getUUID(), DEFAULT_RULES);
     }
 
     public static boolean getPlayerAutoRefill(Player ent) {
-        if (DistExecutor.unsafeCallWhenOn(Dist.CLIENT, () -> () -> ent == Minecraft.getInstance().player)
-                == Boolean.TRUE) {
+        if (FMLEnvironment.dist.isClient()) {
             return ENABLE_AUTOREFILL.get();
         }
         return playerAutoRefill.contains(ent.getUUID());
     }
 
     public static Map<String, ContOverride> getPlayerContOverrides(Player ent) {
-        if (DistExecutor.unsafeCallWhenOn(Dist.CLIENT, () -> () -> ent == Minecraft.getInstance().player)
-                == Boolean.TRUE) {
+        if (FMLEnvironment.dist.isClient()) {
             return getSelfCompiledContOverrides();
         }
         return playerToContOverrides.getOrDefault(ent.getUUID(), DEFAULT_CONT_OVERRIDES);
@@ -397,8 +391,8 @@ public class InvTweaksConfig {
 
             String[] parts = clause.split(":", 2);
             if (parts[0].equals("/tag")) {
-                TagKey<Item> itemKey = TagKey.create(ForgeRegistries.ITEMS.getRegistryKey(), new ResourceLocation(parts[1]));
-                TagKey<Block> blockKey = TagKey.create(ForgeRegistries.BLOCKS.getRegistryKey(), new ResourceLocation(parts[1]));
+                TagKey<Item> itemKey = TagKey.create(BuiltInRegistries.ITEM.key(), new ResourceLocation(parts[1]));
+                TagKey<Block> blockKey = TagKey.create(BuiltInRegistries.BLOCK.key(), new ResourceLocation(parts[1]));
 
                 return Optional.of(stack -> stack.is(itemKey) || (
                             stack.getItem() instanceof BlockItem blockItem
@@ -420,7 +414,7 @@ public class InvTweaksConfig {
             } else { // default to standard item checking
                 try {
                     return Optional.of(
-                            st -> Objects.equals(ForgeRegistries.ITEMS.getKey(st.getItem()), new ResourceLocation(clause)));
+                            st -> Objects.equals(BuiltInRegistries.ITEM.getKey(st.getItem()), new ResourceLocation(clause)));
                 } catch (ResourceLocationException e) {
                     InvTweaksMod.LOGGER.warn("Invalid item resource location found.");
                     return Optional.empty();

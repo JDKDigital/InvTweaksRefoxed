@@ -2,17 +2,19 @@ package invtweaks.network;
 
 import com.electronwill.nightconfig.core.CommentedConfig;
 import com.electronwill.nightconfig.core.UnmodifiableConfig;
+import invtweaks.InvTweaksMod;
 import invtweaks.config.InvTweaksConfig;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.network.NetworkEvent;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
+import net.neoforged.neoforge.network.handling.PlayPayloadContext;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
-import java.util.function.Supplier;
 
-public class PacketUpdateConfig {
+public class PacketUpdateConfig implements CustomPacketPayload {
+    public static final ResourceLocation ID = new ResourceLocation(InvTweaksMod.MODID, "packet_update_config");
     private final List<UnmodifiableConfig> cats;
     private final List<String> rules;
     private final List<UnmodifiableConfig> contOverrides;
@@ -66,26 +68,17 @@ public class PacketUpdateConfig {
         this.autoRefill = buf.readBoolean();
     }
 
-    public void handle(Supplier<NetworkEvent.Context> ctx) {
-        ctx.get()
-                .enqueueWork(
-                        () -> {
-                            InvTweaksConfig.setPlayerCats(
-                                    Objects.requireNonNull(ctx.get().getSender()),
-                                    InvTweaksConfig.cfgToCompiledCats(cats));
-                            InvTweaksConfig.setPlayerRules(
-                                    Objects.requireNonNull(ctx.get().getSender()),
-                                    new InvTweaksConfig.Ruleset(rules));
-                            InvTweaksConfig.setPlayerAutoRefill(ctx.get().getSender(), autoRefill);
-                            InvTweaksConfig.setPlayerContOverrides(
-                                    Objects.requireNonNull(ctx.get().getSender()),
-                                    InvTweaksConfig.cfgToCompiledContOverrides(contOverrides));
-                            // InvTweaksMod.LOGGER.info("Received config from client!");
-                        });
-        ctx.get().setPacketHandled(true);
+    public static void handle(PacketUpdateConfig packet, PlayPayloadContext ctx) {
+        ctx.workHandler().submitAsync(() -> ctx.player().ifPresent(p -> {
+            InvTweaksConfig.setPlayerCats(p, InvTweaksConfig.cfgToCompiledCats(packet.cats));
+            InvTweaksConfig.setPlayerRules(p, new InvTweaksConfig.Ruleset(packet.rules));
+            InvTweaksConfig.setPlayerAutoRefill(p, packet.autoRefill);
+            InvTweaksConfig.setPlayerContOverrides(p, InvTweaksConfig.cfgToCompiledContOverrides(packet.contOverrides));
+        }));
     }
 
-    public void encode(FriendlyByteBuf buf) {
+    @Override
+    public void write(final FriendlyByteBuf buf) {
         buf.writeVarInt(cats.size());
         for (UnmodifiableConfig subCfg : cats) {
             buf.writeUtf(subCfg.getOrElse("name", ""));
@@ -108,5 +101,10 @@ public class PacketUpdateConfig {
             buf.writeUtf(contOverride.getOrElse("sortRange", InvTweaksConfig.NO_SPEC_OVERRIDE));
         }
         buf.writeBoolean(autoRefill);
+    }
+
+    @Override
+    public ResourceLocation id() {
+        return ID;
     }
 }

@@ -1,6 +1,7 @@
 package invtweaks.util;
 
 import invtweaks.network.NetworkDispatcher;
+import invtweaks.network.PacketSortInv;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.Connection;
@@ -17,6 +18,6 @@ public class ClientUtils {
 
     public static boolean serverConnectionExists() {
         LocalPlayer player = Minecraft.getInstance().player;
-        return player != null && NetworkDispatcher.INSTANCE.isRemotePresent(player.connection.getConnection());
+        return player != null && player.connection.isConnected(PacketSortInv.ID);
     }
 }

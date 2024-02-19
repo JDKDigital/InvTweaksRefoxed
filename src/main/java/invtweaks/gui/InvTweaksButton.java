@@ -4,7 +4,8 @@ import invtweaks.InvTweaksMod;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraftforge.client.gui.widget.ExtendedButton;
+import net.neoforged.neoforge.client.gui.widget.ExtendedButton;
+
 
 public class InvTweaksButton extends ExtendedButton {
     protected static final ResourceLocation button =
@@ -19,7 +20,7 @@ public class InvTweaksButton extends ExtendedButton {
     }
 
     @Override
-    public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
+    public void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
         isHovered = this.active
                         && this.visible
                         && mouseX >= this.getX()

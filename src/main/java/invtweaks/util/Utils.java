@@ -4,11 +4,12 @@ import com.google.common.base.Equivalence;
 import com.google.common.collect.Streams;
 import it.unimi.dsi.fastutil.ints.IntArrays;
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.items.ItemHandlerHelper;
-import net.minecraftforge.items.ItemStackHandler;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.neoforged.neoforge.items.ItemHandlerHelper;
+import net.neoforged.neoforge.items.ItemStackHandler;
+
 
 import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.*;
@@ -45,7 +46,7 @@ public class Utils {
             };
     // TODO improve fallback comparator
     public static final Comparator<ItemStack> FALLBACK_COMPARATOR =
-            Comparator.comparing(is -> ForgeRegistries.ITEMS.getKey(is.getItem()));
+            Comparator.comparing(is -> BuiltInRegistries.ITEM.getKey(is.getItem()));
 
     public static int gridToPlayerSlot(int row, int col) {
         if (row < 0 || row >= 4 || col < 0 || col >= 9) {
