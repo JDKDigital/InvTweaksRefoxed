@@ -40,15 +40,15 @@ public class Sorting {
 
             PlayerInventory inv = player.inventory;
 
-            if (player.world.isRemote) {
+            if (player.level.isClientSide) {
                 DistExecutor.unsafeRunWhenOn(
                         Dist.CLIENT,
                         () ->
                                 () -> {
-                                    PlayerController pc = Minecraft.getInstance().playerController;
+                                    PlayerController pc = Minecraft.getInstance().gameMode;
                                     Int2ObjectMap<Slot> indexToSlot =
-                                            player.openContainer.inventorySlots.stream()
-                                                    .filter(slot -> slot.inventory instanceof PlayerInventory)
+                                            player.containerMenu.slots.stream()
+                                                    .filter(slot -> slot.container instanceof PlayerInventory)
                                                     .filter(slot -> 0 <= slot.getSlotIndex() && slot.getSlotIndex() < 36)
                                                     .collect(
                                                             Collectors.toMap(
@@ -58,9 +58,9 @@ public class Sorting {
                                                                     Int2ObjectOpenHashMap::new));
 
                                     IntList stackIdxs =
-                                            IntStream.range(0, inv.mainInventory.size())
+                                            IntStream.range(0, inv.items.size())
                                                     .filter(idx -> Collections.binarySearch(lockedSlots, idx) < 0)
-                                                    .filter(idx -> !inv.mainInventory.get(idx).isEmpty())
+                                                    .filter(idx -> !inv.items.get(idx).isEmpty())
                                                     .collect(IntArrayList::new, IntList::add, IntList::addAll);
                                     Map<Equivalence.Wrapper<ItemStack>, Set<Slot>> gatheredSlots =
                                             Utils.gatheredSlots(
@@ -68,7 +68,7 @@ public class Sorting {
                                                             stackIdxs.stream()
                                                                     .mapToInt(v -> v)
                                                                     .mapToObj(indexToSlot::get)
-                                                                    .filter(Slot::getHasStack)
+                                                                    .filter(Slot::hasItem)
                                                                     .iterator());
                                     List<Equivalence.Wrapper<ItemStack>> stackWs =
                                             new ArrayList<>(gatheredSlots.keySet());
@@ -120,17 +120,17 @@ public class Sorting {
                 List<ItemStack> stacks =
                         Utils.condensed(
                                 () ->
-                                        IntStream.range(0, inv.mainInventory.size())
+                                        IntStream.range(0, inv.items.size())
                                                 .filter(idx -> Collections.binarySearch(lockedSlots, idx) < 0)
-                                                .mapToObj(inv.mainInventory::get)
+                                                .mapToObj(inv.items::get)
                                                 .filter(st -> !st.isEmpty())
                                                 .iterator());
                 stacks.sort(Utils.FALLBACK_COMPARATOR);
                 stacks = new LinkedList<>(stacks);
 
-                for (int i = 0; i < inv.mainInventory.size(); ++i) {
+                for (int i = 0; i < inv.items.size(); ++i) {
                     if (Collections.binarySearch(lockedSlots, i) < 0) {
-                        inv.mainInventory.set(i, ItemStack.EMPTY);
+                        inv.items.set(i, ItemStack.EMPTY);
                     }
                 }
 
@@ -155,7 +155,7 @@ public class Sorting {
                     //noinspection UnstableApiUsage
                     Streams.zip(specificRules.stream(), curStacks.stream(), Pair::of)
                             .forEach(
-                                    pr -> inv.mainInventory.set(pr.getKey(), pr.getValue()));
+                                    pr -> inv.items.set(pr.getKey(), pr.getValue()));
                 }
 
                 @SuppressWarnings("UnstableApiUsage") PrimitiveIterator.OfInt fallbackIt =
@@ -173,17 +173,17 @@ public class Sorting {
                     if (stacks.isEmpty()) {
                         break;
                     }
-                    if (inv.mainInventory.get(idx).isEmpty()) {
-                        inv.mainInventory.set(idx, stacks.remove(0));
+                    if (inv.items.get(idx).isEmpty()) {
+                        inv.items.set(idx, stacks.remove(0));
                     }
                 }
             }
             // ctx.get().getSender().openContainer.detectAndSendChanges();
         } else {
-            Container cont = player.openContainer;
+            Container cont = player.containerMenu;
 
             // check if an inventory is open
-            if (cont != player.container) {
+            if (cont != player.inventoryMenu) {
                 String contClass = cont.getClass().getName();
                 InvTweaksConfig.ContOverride override =
                         InvTweaksConfig.getPlayerContOverrides(player).get(contClass);
@@ -194,26 +194,26 @@ public class Sorting {
                         (override != null && override.getSortRange() != null
                                 ? override.getSortRange().stream()
                                 .filter(Objects::nonNull)
-                                .filter(idx -> 0 <= idx && idx < cont.inventorySlots.size())
-                                .map(cont.inventorySlots::get)
-                                : cont.inventorySlots.stream())
-                                .filter(slot -> !(slot.inventory instanceof PlayerInventory))
+                                .filter(idx -> 0 <= idx && idx < cont.slots.size())
+                                .map(cont.slots::get)
+                                : cont.slots.stream())
+                                .filter(slot -> !(slot.container instanceof PlayerInventory))
                                 .filter(
                                         slot ->
-                                                (slot.canTakeStack(player) && slot.isItemValid(slot.getStack()))
-                                                        || !slot.getHasStack())
+                                                (slot.mayPickup(player) && slot.mayPlace(slot.getItem()))
+                                                        || !slot.hasItem())
                                 .collect(Collectors.toList());
 
-                if (player.world.isRemote) {
+                if (player.level.isClientSide) {
                     DistExecutor.unsafeRunWhenOn(
                             Dist.CLIENT,
                             () ->
                                     () -> {
-                                        PlayerController pc = Minecraft.getInstance().playerController;
+                                        PlayerController pc = Minecraft.getInstance().gameMode;
                                         Map<Equivalence.Wrapper<ItemStack>, Set<Slot>> gatheredSlots =
                                                 Utils.gatheredSlots(
                                                         () -> validSlots.stream()
-                                                                .filter(Slot::getHasStack)
+                                                                .filter(Slot::hasItem)
                                                                 .iterator());
                                         List<Equivalence.Wrapper<ItemStack>> stackWs =
                                                 new ArrayList<>(gatheredSlots.keySet());
@@ -228,7 +228,7 @@ public class Sorting {
                                             for (Map.Entry<Slot, Slot> displacedPair : displaced.entrySet()) {
                                                 Set<Slot> toModify =
                                                         gatheredSlots.get(
-                                                                Utils.STACKABLE.wrap(displacedPair.getValue().getStack()));
+                                                                Utils.STACKABLE.wrap(displacedPair.getValue().getItem()));
                                                 toModify.remove(displacedPair.getKey());
                                                 toModify.add(displacedPair.getValue());
                                             }
@@ -240,7 +240,7 @@ public class Sorting {
                             Utils.condensed(
                                     () ->
                                             validSlots.stream()
-                                                    .map(Slot::getStack)
+                                                    .map(Slot::getItem)
                                                     .filter(st -> !st.isEmpty())
                                                     .iterator());
                     stacks.sort(Utils.FALLBACK_COMPARATOR);
@@ -248,25 +248,25 @@ public class Sorting {
                     Iterator<Slot> slotIt = validSlots.iterator();
                     for (ItemStack stack : stacks) {
                         Slot cur = null;
-                        while (slotIt.hasNext() && !(cur = slotIt.next()).isItemValid(stack)) {
+                        while (slotIt.hasNext() && !(cur = slotIt.next()).mayPlace(stack)) {
                             assert true;
                         }
-                        if (cur == null || !cur.isItemValid(stack)) {
+                        if (cur == null || !cur.mayPlace(stack)) {
                             return; // nope right out of the sort
                         }
                     }
 
                     // execute sort
-                    validSlots.forEach(slot -> slot.putStack(ItemStack.EMPTY));
+                    validSlots.forEach(slot -> slot.set(ItemStack.EMPTY));
                     slotIt = validSlots.iterator();
                     for (ItemStack stack : stacks) {
                         // System.out.println(i);
                         Slot cur = null;
-                        while (slotIt.hasNext() && !(cur = slotIt.next()).isItemValid(stack)) {
+                        while (slotIt.hasNext() && !(cur = slotIt.next()).mayPlace(stack)) {
                             assert true;
                         }
                         assert cur != null;
-                        cur.putStack(stack);
+                        cur.set(stack);
                     }
                 }
             }
@@ -300,7 +300,7 @@ public class Sorting {
                     @SuppressWarnings("unused") boolean fullInserted = Client.clientPushToSlots(player, pc, fromIt, toIt, displaced);
                     for (Map.Entry<Slot, Slot> displacedPair : displaced.entrySet()) {
                         Equivalence.Wrapper<ItemStack> displacedW =
-                                Utils.STACKABLE.wrap(displacedPair.getValue().getStack());
+                                Utils.STACKABLE.wrap(displacedPair.getValue().getItem());
                         Set<Slot> toModify = gatheredSlots.get(displacedW);
                         toModify.remove(displacedPair.getKey());
                         toModify.add(displacedPair.getValue());
@@ -342,7 +342,7 @@ public class Sorting {
                 // Where is the item coming from
                 Slot originSlot = OriginIter.next();
                 // Pick up the origin item
-                playerController.windowClick(player.openContainer.windowId, originSlot.slotNumber, 0, ClickType.PICKUP, player);
+                playerController.handleInventoryMouseClick(player.containerMenu.containerId, originSlot.index, 0, ClickType.PICKUP, player);
 
                 // Find next open slot in the container
                 Slot destinationSlot = null;
@@ -352,8 +352,8 @@ public class Sorting {
                         destinationSlot = destinationIter.previous();
 
                         // If the stack is not at max capacity AND can stack with the one that is held right now
-                        if (destinationSlot.getStack().getCount() != Math.min(destinationSlot.getSlotStackLimit(), destinationSlot.getStack().getMaxStackSize())
-                                && Utils.STACKABLE.equivalent(destinationSlot.getStack(), player.inventory.getItemStack())) {
+                        if (destinationSlot.getItem().getCount() != Math.min(destinationSlot.getMaxStackSize(), destinationSlot.getItem().getMaxStackSize())
+                                && Utils.STACKABLE.equivalent(destinationSlot.getItem(), player.inventory.getCarried())) {
                             // Stay on this current 'previous' slot (by doing nothing).
                             assert true;
                         }
@@ -370,10 +370,10 @@ public class Sorting {
                     // picking up whatever was at destination, if it had anything.
                     // or adding to that stack, if we backed up because it was the same item.
                     // (possibly filling the stack and getting leftover ItemStack)
-                    playerController.windowClick(player.openContainer.windowId, destinationSlot.slotNumber, 0, ClickType.PICKUP, player);
+                    playerController.handleInventoryMouseClick(player.containerMenu.containerId, destinationSlot.index, 0, ClickType.PICKUP, player);
 
                     // Didnt pick anything up -> done
-                    if (player.inventory.getItemStack().isEmpty()) {
+                    if (player.inventory.getCarried().isEmpty()) {
                         completedCurrentItemSwap = true;
                         break;
                     }
@@ -382,14 +382,14 @@ public class Sorting {
                     else {
                         // If its overflow from the current item, no need to swap it back to the starting position,
                         // just try the next slot.
-                        if (Utils.STACKABLE.equivalent(destinationSlot.getStack(), player.inventory.getItemStack()))
+                        if (Utils.STACKABLE.equivalent(destinationSlot.getItem(), player.inventory.getCarried()))
                             continue;
 
                         // Else, this stack was picked up, and is being displaced...
                         // Click to put this item into the origin slot, which is guaranteed to be free
-                        playerController.windowClick(player.openContainer.windowId, originSlot.slotNumber, 0, ClickType.PICKUP, player);
+                        playerController.handleInventoryMouseClick(player.containerMenu.containerId, originSlot.index, 0, ClickType.PICKUP, player);
 
-                        if (originSlot.getHasStack() && !ItemHandlerHelper.canItemStacksStack(originSlot.getStack(), destinationSlot.getStack())) {
+                        if (originSlot.hasItem() && !ItemHandlerHelper.canItemStacksStack(originSlot.getItem(), destinationSlot.getItem())) {
                             // This iteration is now complete.
                             completedCurrentItemSwap = true;
                             // Remember that the item that was in destination is now moved to origin...
@@ -398,7 +398,7 @@ public class Sorting {
                         }
                     }
                 }
-                if (!destinationIter.hasNext() && Optional.ofNullable(destinationSlot).filter(s -> s.getStack().getCount() >= Math.min(s.getSlotStackLimit(), s.getStack().getMaxStackSize())).isPresent()) {
+                if (!destinationIter.hasNext() && Optional.ofNullable(destinationSlot).filter(s -> s.getItem().getCount() >= Math.min(s.getMaxStackSize(), s.getItem().getMaxStackSize())).isPresent()) {
                     break;
                 }
             }

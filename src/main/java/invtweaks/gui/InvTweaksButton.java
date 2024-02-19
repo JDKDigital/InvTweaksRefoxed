@@ -9,6 +9,8 @@ import net.minecraftforge.fml.client.gui.widget.ExtendedButton;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 
+import net.minecraft.client.gui.widget.button.Button.IPressable;
+
 public class InvTweaksButton extends ExtendedButton {
     protected static final ResourceLocation button =
             new ResourceLocation(InvTweaksMod.MODID, "textures/gui/button_sprites.png");
@@ -31,7 +33,7 @@ public class InvTweaksButton extends ExtendedButton {
                         && mouseY >= this.y
                         && mouseX < this.x + this.width
                         && mouseY < this.y + this.height;
-        Minecraft.getInstance().getTextureManager().bindTexture(button);
+        Minecraft.getInstance().getTextureManager().bind(button);
         blit(matrixStack, x, y, tx, ty + (isHovered ? 16 : 0), 14, 16);
     }
 }

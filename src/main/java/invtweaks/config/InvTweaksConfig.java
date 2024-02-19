@@ -216,14 +216,14 @@ public class InvTweaksConfig {
     @SubscribeEvent
     public static void onLoad(final ModConfig.Loading configEvent) {
         ThreadTaskExecutor<?> executor = LogicalSidedProvider.WORKQUEUE.get(LogicalSide.CLIENT);
-        executor.runAsync(() -> setDirty(true));
+        executor.submit(() -> setDirty(true));
     }
 
     @SuppressWarnings("unused")
     @SubscribeEvent
     public static void onReload(final ModConfig.Reloading configEvent) {
         ThreadTaskExecutor<?> executor = LogicalSidedProvider.WORKQUEUE.get(LogicalSide.CLIENT);
-        executor.runAsync(() -> setDirty(true));
+        executor.submit(() -> setDirty(true));
     }
 
     public static boolean isDirty() {
@@ -266,23 +266,23 @@ public class InvTweaksConfig {
     }
 
     public static void setPlayerCats(PlayerEntity ent, Map<String, Category> cats) {
-        playerToCats.put(ent.getUniqueID(), cats);
+        playerToCats.put(ent.getUUID(), cats);
     }
 
     public static void setPlayerRules(PlayerEntity ent, Ruleset ruleset) {
-        playerToRules.put(ent.getUniqueID(), ruleset);
+        playerToRules.put(ent.getUUID(), ruleset);
     }
 
     public static void setPlayerAutoRefill(PlayerEntity ent, boolean autoRefill) {
         if (autoRefill) {
-            playerAutoRefill.add(ent.getUniqueID());
+            playerAutoRefill.add(ent.getUUID());
         } else {
-            playerAutoRefill.remove(ent.getUniqueID());
+            playerAutoRefill.remove(ent.getUUID());
         }
     }
 
     public static void setPlayerContOverrides(PlayerEntity ent, Map<String, ContOverride> val) {
-        playerToContOverrides.put(ent.getUniqueID(), val);
+        playerToContOverrides.put(ent.getUUID(), val);
     }
 
     public static Map<String, Category> getPlayerCats(PlayerEntity ent) {
@@ -290,7 +290,7 @@ public class InvTweaksConfig {
                 == Boolean.TRUE) {
             return getSelfCompiledCats();
         }
-        return playerToCats.getOrDefault(ent.getUniqueID(), DEFAULT_CATS);
+        return playerToCats.getOrDefault(ent.getUUID(), DEFAULT_CATS);
     }
 
     public static Ruleset getPlayerRules(PlayerEntity ent) {
@@ -298,7 +298,7 @@ public class InvTweaksConfig {
                 == Boolean.TRUE) {
             return getSelfCompiledRules();
         }
-        return playerToRules.getOrDefault(ent.getUniqueID(), DEFAULT_RULES);
+        return playerToRules.getOrDefault(ent.getUUID(), DEFAULT_RULES);
     }
 
     public static boolean getPlayerAutoRefill(PlayerEntity ent) {
@@ -306,7 +306,7 @@ public class InvTweaksConfig {
                 == Boolean.TRUE) {
             return ENABLE_AUTOREFILL.get();
         }
-        return playerAutoRefill.contains(ent.getUniqueID());
+        return playerAutoRefill.contains(ent.getUUID());
     }
 
     public static Map<String, ContOverride> getPlayerContOverrides(PlayerEntity ent) {
@@ -314,7 +314,7 @@ public class InvTweaksConfig {
                 == Boolean.TRUE) {
             return getSelfCompiledContOverrides();
         }
-        return playerToContOverrides.getOrDefault(ent.getUniqueID(), DEFAULT_CONT_OVERRIDES);
+        return playerToContOverrides.getOrDefault(ent.getUUID(), DEFAULT_CONT_OVERRIDES);
     }
 
     public static boolean isSortEnabled(boolean isPlayerSort) {
@@ -386,13 +386,13 @@ public class InvTweaksConfig {
             if (parts[0].equals("/tag")) {
                 return Optional.of(
                         st ->
-                                (Optional.ofNullable(ItemTags.getCollection().get(new ResourceLocation(parts[1])))
-                                        .filter(tg -> st.getItem().isIn(tg))
+                                (Optional.ofNullable(ItemTags.getAllTags().getTag(new ResourceLocation(parts[1])))
+                                        .filter(tg -> st.getItem().is(tg))
                                         .isPresent()
                                         || (st.getItem() instanceof BlockItem
                                         && Optional.ofNullable(
-                                        BlockTags.getCollection().get(new ResourceLocation(parts[1])))
-                                        .filter(tg -> ((BlockItem) st.getItem()).getBlock().isIn(tg))
+                                        BlockTags.getAllTags().getTag(new ResourceLocation(parts[1])))
+                                        .filter(tg -> ((BlockItem) st.getItem()).getBlock().is(tg))
                                         .isPresent())));
             } else if (parts[0].equals("/instanceof")
                     || parts[0].equals("/class")) { // use this for e.g. pickaxes

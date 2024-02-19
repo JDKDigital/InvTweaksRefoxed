@@ -39,11 +39,11 @@ public class PacketUpdateConfig {
         int catsSize = buf.readVarInt();
         for (int i = 0; i < catsSize; ++i) {
             CommentedConfig subCfg = CommentedConfig.inMemory();
-            subCfg.set("name", buf.readString(32767));
+            subCfg.set("name", buf.readUtf(32767));
             List<String> spec = new ArrayList<>();
             int specSize = buf.readVarInt();
             for (int j = 0; j < specSize; ++j) {
-                spec.add(buf.readString(32767));
+                spec.add(buf.readUtf(32767));
             }
             subCfg.set("spec", spec);
             cats.add(subCfg);
@@ -51,16 +51,16 @@ public class PacketUpdateConfig {
         this.rules = new ArrayList<>();
         int rulesSize = buf.readVarInt();
         for (int i = 0; i < rulesSize; ++i) {
-            rules.add(buf.readString(32767));
+            rules.add(buf.readUtf(32767));
         }
         this.contOverrides = new ArrayList<>();
         int contOverridesSize = buf.readVarInt();
         for (int i = 0; i < contOverridesSize; ++i) {
             CommentedConfig contOverride = CommentedConfig.inMemory();
-            contOverride.set("containerClass", buf.readString(32767));
+            contOverride.set("containerClass", buf.readUtf(32767));
             contOverride.set("x", buf.readInt());
             contOverride.set("y", buf.readInt());
-            contOverride.set("sortRange", buf.readString(32767));
+            contOverride.set("sortRange", buf.readUtf(32767));
             contOverrides.add(contOverride);
         }
         this.autoRefill = buf.readBoolean();
@@ -88,24 +88,24 @@ public class PacketUpdateConfig {
     public void encode(PacketBuffer buf) {
         buf.writeVarInt(cats.size());
         for (UnmodifiableConfig subCfg : cats) {
-            buf.writeString(subCfg.getOrElse("name", ""));
+            buf.writeUtf(subCfg.getOrElse("name", ""));
             List<String> spec = subCfg.getOrElse("spec", Collections.emptyList());
             buf.writeVarInt(spec.size());
             for (String subSpec : spec) {
-                buf.writeString(subSpec);
+                buf.writeUtf(subSpec);
             }
         }
         buf.writeVarInt(rules.size());
         for (String subRule : rules) {
-            buf.writeString(subRule);
+            buf.writeUtf(subRule);
         }
         buf.writeVarInt(contOverrides.size());
         for (UnmodifiableConfig contOverride : contOverrides) {
-            buf.writeString(contOverride.getOrElse("containerClass", ""));
+            buf.writeUtf(contOverride.getOrElse("containerClass", ""));
             int x = contOverride.getIntOrElse("x", InvTweaksConfig.NO_POS_OVERRIDE);
             int y = contOverride.getIntOrElse("y", InvTweaksConfig.NO_POS_OVERRIDE);
             buf.writeInt(x).writeInt(y);
-            buf.writeString(contOverride.getOrElse("sortRange", InvTweaksConfig.NO_SPEC_OVERRIDE));
+            buf.writeUtf(contOverride.getOrElse("sortRange", InvTweaksConfig.NO_SPEC_OVERRIDE));
         }
         buf.writeBoolean(autoRefill);
     }

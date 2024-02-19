@@ -93,12 +93,12 @@ public class InvTweaksMod {
             DistExecutor.unsafeCallWhenOn(
                     Dist.CLIENT,
                     () ->
-                            () -> ObfuscationReflectionHelper.findField(ContainerScreen.class, "field_147003_i"));
+                            () -> ObfuscationReflectionHelper.findField(ContainerScreen.class, "leftPos"));
     private static final Field guiTopF =
             DistExecutor.unsafeCallWhenOn(
                     Dist.CLIENT,
                     () ->
-                            () -> ObfuscationReflectionHelper.findField(ContainerScreen.class, "field_147009_r"));
+                            () -> ObfuscationReflectionHelper.findField(ContainerScreen.class, "topPos"));
     private static final Set<Screen> screensWithExtSort =
             Collections.newSetFromMap(new WeakHashMap<>());
     private static final Method renderHotbarItemM =
@@ -108,7 +108,7 @@ public class InvTweaksMod {
                             () ->
                                     ObfuscationReflectionHelper.findMethod(
                                             IngameGui.class,
-                                            "func_184044_a",
+                                            "renderSlot",
                                             int.class,
                                             int.class,
                                             float.class,
@@ -176,7 +176,7 @@ public class InvTweaksMod {
         // TODO change button position algorithm?
         return slots.stream()
                 .filter(filter)
-                .max(Comparator.<Slot>comparingInt(s -> s.xPos).thenComparingInt(s -> -s.yPos))
+                .max(Comparator.<Slot>comparingInt(s -> s.x).thenComparingInt(s -> -s.y))
                 .orElse(null);
     }
 
@@ -271,16 +271,16 @@ public class InvTweaksMod {
             // first, work with player inventory
             Slot placement =
                     getDefaultButtonPlacement(
-                            ((ContainerScreen<?>) event.getGui()).getContainer().inventorySlots,
-                            slot -> slot.inventory instanceof PlayerInventory);
+                            ((ContainerScreen<?>) event.getGui()).getMenu().slots,
+                            slot -> slot.container instanceof PlayerInventory);
             if (placement != null
                     && InvTweaksConfig.isSortEnabled(true)
                     && InvTweaksConfig.isButtonEnabled(true)) {
                 try {
                     event.addWidget(
                             new InvTweaksButtonSort(
-                                    guiLeftF.getInt(event.getGui()) + placement.xPos + 17,
-                                    guiTopF.getInt(event.getGui()) + placement.yPos,
+                                    guiLeftF.getInt(event.getGui()) + placement.x + 17,
+                                    guiTopF.getInt(event.getGui()) + placement.y,
                                     true));
                 } catch (Exception e) {
                     Throwables.throwIfUnchecked(e);
@@ -291,7 +291,7 @@ public class InvTweaksMod {
             // then, work with external inventory
             String contClass =
                     event.getGui() != null
-                            ? ((ContainerScreen<?>) event.getGui()).getContainer().getClass().getName()
+                            ? ((ContainerScreen<?>) event.getGui()).getMenu().getClass().getName()
                             : "";
             InvTweaksConfig.ContOverride override =
                     InvTweaksConfig.getSelfCompiledContOverrides().get(contClass);
@@ -307,16 +307,16 @@ public class InvTweaksMod {
                 }
                 placement =
                         getDefaultButtonPlacement(
-                                ((ContainerScreen<?>) event.getGui()).getContainer().inventorySlots,
+                                ((ContainerScreen<?>) event.getGui()).getMenu().slots,
                                 slot ->
-                                        !(slot.inventory instanceof PlayerInventory
-                                                || slot.inventory instanceof CraftingInventory));
+                                        !(slot.container instanceof PlayerInventory
+                                                || slot.container instanceof CraftingInventory));
                 if (placement != null) {
                     if (x == InvTweaksConfig.NO_POS_OVERRIDE) {
-                        x = placement.xPos + 17;
+                        x = placement.x + 17;
                     }
                     if (y == InvTweaksConfig.NO_POS_OVERRIDE) {
-                        y = placement.yPos;
+                        y = placement.y;
                     }
                 }
                 // System.out.println(x+ " " +y);
@@ -355,7 +355,7 @@ public class InvTweaksMod {
                     usedCache.computeIfAbsent(event.player, k -> new Object2IntOpenHashMap<>());
             for (Hand hand : Hand.values()) {
                 if (cached.get(hand) != null
-                        && event.player.getHeldItem(hand).isEmpty()
+                        && event.player.getItemInHand(hand).isEmpty()
                         && ((ServerPlayerEntity) event.player)
                         .getStats()
                         .getValue(Stats.ITEM_USED.get(cached.get(hand)))
@@ -363,7 +363,7 @@ public class InvTweaksMod {
                     // System.out.println("Item depleted");
                     searchForSubstitute(event.player, hand, cached.get(hand));
                 }
-                ItemStack held = event.player.getHeldItem(hand);
+                ItemStack held = event.player.getItemInHand(hand);
                 cached.put(hand, held.isEmpty() ? null : held.getItem());
                 if (!held.isEmpty()) {
                     ucached.put(
@@ -383,7 +383,7 @@ public class InvTweaksMod {
 
     @SubscribeEvent
     public void onEntityJoin(EntityJoinWorldEvent event) {
-        if (event.getWorld().isRemote) {
+        if (event.getWorld().isClientSide) {
             DistExecutor.unsafeRunWhenOn(
                     Dist.CLIENT,
                     () ->
@@ -402,7 +402,7 @@ public class InvTweaksMod {
                         .orElseGet(IntArrayList::new);
         frozen.sort(null);
 
-        if (Collections.binarySearch(frozen, ent.inventory.currentItem) >= 0) {
+        if (Collections.binarySearch(frozen, ent.inventory.selected) >= 0) {
             return; // ignore frozen slot
         }
 
@@ -417,7 +417,7 @@ public class InvTweaksMod {
                                 ItemStack cand = cap.extractItem(i, Integer.MAX_VALUE, true).copy();
                                 if (cand.getItem() == item) {
                                     cap.extractItem(i, Integer.MAX_VALUE, false);
-                                    ent.setHeldItem(hand, cand);
+                                    ent.setItemInHand(hand, cand);
                                     break;
                                 }
                             }
@@ -429,14 +429,14 @@ public class InvTweaksMod {
     public void keyInput(GuiScreenEvent.KeyboardKeyPressedEvent.Pre event) {
         if (event.getGui() instanceof ContainerScreen
                 && !(event.getGui() instanceof CreativeScreen)
-                && !(event.getGui().getListener() instanceof TextFieldWidget)
+                && !(event.getGui().getFocused() instanceof TextFieldWidget)
                 && !isJEIKeyboardActive()) {
             // System.out.println(event.getGui().getFocused());
             if (InvTweaksConfig.isSortEnabled(true)
                     && keyBindings
                     .get("sort_player")
                     .isActiveAndMatches(
-                            InputMappings.getInputByCode(event.getKeyCode(), event.getScanCode()))) {
+                            InputMappings.getKey(event.getKeyCode(), event.getScanCode()))) {
                 requestSort(true);
             }
             if (InvTweaksConfig.isSortEnabled(false)
@@ -444,19 +444,19 @@ public class InvTweaksMod {
                     && keyBindings
                     .get("sort_inventory")
                     .isActiveAndMatches(
-                            InputMappings.getInputByCode(event.getKeyCode(), event.getScanCode()))) {
+                            InputMappings.getKey(event.getKeyCode(), event.getScanCode()))) {
                 requestSort(false);
             }
 
             Slot slot = ((ContainerScreen<?>) event.getGui()).getSlotUnderMouse();
-            if (slot != null && slot.inventory != null) {
-                boolean isPlayerSort = slot.inventory instanceof PlayerInventory;
+            if (slot != null && slot.container != null) {
+                boolean isPlayerSort = slot.container instanceof PlayerInventory;
                 if (InvTweaksConfig.isSortEnabled(isPlayerSort)
                         && (isPlayerSort || screensWithExtSort.contains(event.getGui()))
                         && keyBindings
                         .get("sort_either")
                         .isActiveAndMatches(
-                                InputMappings.getInputByCode(event.getKeyCode(), event.getScanCode()))) {
+                                InputMappings.getKey(event.getKeyCode(), event.getScanCode()))) {
                     requestSort(isPlayerSort);
                 }
             }
@@ -469,11 +469,11 @@ public class InvTweaksMod {
         if (event.getGui() instanceof ContainerScreen && !(event.getGui() instanceof CreativeScreen)) {
             boolean isMouseActive =
                     keyBindings.get("sort_either").getKeyConflictContext().isActive()
-                            && keyBindings.get("sort_either").matchesMouseKey(event.getButton());
+                            && keyBindings.get("sort_either").matchesMouse(event.getButton());
             if (!isMouseActive) return;
             Slot slot = ((ContainerScreen<?>) event.getGui()).getSlotUnderMouse();
-            if (slot != null && slot.inventory != null) {
-                boolean isPlayerSort = slot.inventory instanceof PlayerInventory;
+            if (slot != null && slot.container != null) {
+                boolean isPlayerSort = slot.container instanceof PlayerInventory;
                 if (InvTweaksConfig.isSortEnabled(isPlayerSort)
                         && (isPlayerSort || screensWithExtSort.contains(event.getGui()))) {
                     requestSort(isPlayerSort);
@@ -500,13 +500,13 @@ public class InvTweaksMod {
             frozen.sort(null);
 
             assert ent != null;
-            if (Collections.binarySearch(frozen, ent.inventory.currentItem) >= 0) {
+            if (Collections.binarySearch(frozen, ent.inventory.selected) >= 0) {
                 return;
             }
 
-            HandSide dominantHand = ent.getPrimaryHand();
-            int i = Minecraft.getInstance().getMainWindow().getScaledWidth() / 2;
-            int i2 = Minecraft.getInstance().getMainWindow().getScaledHeight() - 16 - 3;
+            HandSide dominantHand = ent.getMainArm();
+            int i = Minecraft.getInstance().getWindow().getGuiScaledWidth() / 2;
+            int i2 = Minecraft.getInstance().getWindow().getGuiScaledHeight() - 16 - 3;
             int iprime;
             if (dominantHand == HandSide.RIGHT) {
                 iprime = i + 91 + 10;
@@ -514,14 +514,14 @@ public class InvTweaksMod {
                 iprime = i - 91 - 26;
             }
             int itemCount =
-                    IntStream.range(0, ent.inventory.mainInventory.size())
+                    IntStream.range(0, ent.inventory.items.size())
                             .filter(idx -> Collections.binarySearch(frozen, idx) < 0)
-                            .mapToObj(ent.inventory.mainInventory::get)
-                            .filter(st -> ItemHandlerHelper.canItemStacksStack(st, ent.getHeldItemMainhand()))
+                            .mapToObj(ent.inventory.items::get)
+                            .filter(st -> ItemHandlerHelper.canItemStacksStack(st, ent.getMainHandItem()))
                             .mapToInt(ItemStack::getCount)
                             .sum();
-            if (itemCount > ent.getHeldItemMainhand().getCount()) {
-                ItemStack toRender = ent.getHeldItemMainhand().copy();
+            if (itemCount > ent.getMainHandItem().getCount()) {
+                ItemStack toRender = ent.getMainHandItem().copy();
                 toRender.setCount(itemCount);
 
                 //noinspection deprecation
@@ -533,10 +533,10 @@ public class InvTweaksMod {
 
                 try {
                     renderHotbarItemM.invoke(
-                            Minecraft.getInstance().ingameGUI,
+                            Minecraft.getInstance().gui,
                             iprime,
                             i2,
-                            Minecraft.getInstance().getRenderPartialTicks(),
+                            Minecraft.getInstance().getFrameTime(),
                             ent,
                             toRender);
                 } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {

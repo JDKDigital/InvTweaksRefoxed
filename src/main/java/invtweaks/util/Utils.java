@@ -171,7 +171,7 @@ public class Utils {
         return Streams.stream(iterable)
                 .collect(
                         Collectors.groupingBy(
-                                sl -> STACKABLE.wrap(sl.getStack().copy()), // @#*! itemstack mutability
+                                sl -> STACKABLE.wrap(sl.getItem().copy()), // @#*! itemstack mutability
                                 LinkedHashMap::new,
                                 Collectors.toCollection(ObjectLinkedOpenHashSet::new)));
     }
