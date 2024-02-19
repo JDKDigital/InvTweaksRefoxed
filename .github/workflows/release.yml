@@ -40,7 +40,6 @@ jobs:
 
           name: ""
           loaders: |
-            forge
             neoforge
       - name: Upload checksum
         id: upload-release-assets
