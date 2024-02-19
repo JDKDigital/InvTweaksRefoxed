@@ -30,10 +30,10 @@ jobs:
       - name: Upload assets to GitHub, Modrinth and CurseForge
         uses: Kir-Antipov/mc-publish@v3.3
         with:
-          modrinth-id: TODO
+          modrinth-id: uqnMI1kq
           modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
 
-          curseforge-id: TODO
+          curseforge-id: 976858
           curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
 
           github-token: ${{ secrets.GITHUB_TOKEN }}
