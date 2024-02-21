@@ -1,6 +1,6 @@
-package invtweaks.network;
+package cy.jdkdigital.invtweaks.network;
 
-import invtweaks.InvTweaksMod;
+import cy.jdkdigital.invtweaks.InvTweaksMod;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlerEvent;

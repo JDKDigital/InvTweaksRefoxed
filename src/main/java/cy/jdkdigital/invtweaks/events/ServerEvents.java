@@ -1,8 +1,8 @@
-package invtweaks.events;
+package cy.jdkdigital.invtweaks.events;
 
-import invtweaks.InvTweaksMod;
-import invtweaks.config.InvTweaksConfig;
-import invtweaks.util.ClientUtils;
+import cy.jdkdigital.invtweaks.InvTweaksMod;
+import cy.jdkdigital.invtweaks.config.InvTweaksConfig;
+import cy.jdkdigital.invtweaks.util.ClientUtils;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
@@ -39,17 +39,12 @@ public class ServerEvents {
 
     @SubscribeEvent
     public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
-        if (event.phase != TickEvent.Phase.END) {
+        if (event.phase != TickEvent.Phase.END || !InvTweaksConfig.getPlayerAutoRefill(event.player)) {
             return;
         }
         if (event.side == LogicalSide.SERVER) {
-            if (!InvTweaksConfig.getPlayerAutoRefill(event.player)) {
-                return;
-            }
-            EnumMap<InteractionHand, Item> cached =
-                    itemsCache.computeIfAbsent(event.player, k -> new EnumMap<>(InteractionHand.class));
-            Object2IntMap<Item> ucached =
-                    usedCache.computeIfAbsent(event.player, k -> new Object2IntOpenHashMap<>());
+            EnumMap<InteractionHand, Item> cached = itemsCache.computeIfAbsent(event.player, k -> new EnumMap<>(InteractionHand.class));
+            Object2IntMap<Item> ucached = usedCache.computeIfAbsent(event.player, k -> new Object2IntOpenHashMap<>());
             for (InteractionHand hand : InteractionHand.values()) {
                 if (cached.get(hand) != null
                         && event.player.getItemInHand(hand).isEmpty()
@@ -57,7 +52,6 @@ public class ServerEvents {
                         .getStats()
                         .getValue(Stats.ITEM_USED.get(cached.get(hand)))
                         > ucached.getOrDefault(cached.get(hand), Integer.MAX_VALUE)) {
-                    // System.out.println("Item depleted");
                     searchForSubstitute(event.player, hand, cached.get(hand));
                 }
                 ItemStack held = event.player.getItemInHand(hand);

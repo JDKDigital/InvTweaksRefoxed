@@ -1,7 +1,7 @@
-package invtweaks.events;
+package cy.jdkdigital.invtweaks.events;
 
 import com.mojang.blaze3d.platform.InputConstants;
-import invtweaks.InvTweaksMod;
+import cy.jdkdigital.invtweaks.InvTweaksMod;
 import net.minecraft.client.KeyMapping;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;

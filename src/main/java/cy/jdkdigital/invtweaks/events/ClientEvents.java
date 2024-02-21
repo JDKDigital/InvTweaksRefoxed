@@ -1,14 +1,14 @@
-package invtweaks.events;
+package cy.jdkdigital.invtweaks.events;
 
 import com.google.common.base.Throwables;
 import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.blaze3d.systems.RenderSystem;
-import invtweaks.InvTweaksMod;
-import invtweaks.config.InvTweaksConfig;
-import invtweaks.gui.InvTweaksButtonSort;
-import invtweaks.network.PacketSortInv;
-import invtweaks.util.ClientUtils;
-import invtweaks.util.Sorting;
+import cy.jdkdigital.invtweaks.InvTweaksMod;
+import cy.jdkdigital.invtweaks.config.InvTweaksConfig;
+import cy.jdkdigital.invtweaks.gui.InvTweaksButtonSort;
+import cy.jdkdigital.invtweaks.network.PacketSortInv;
+import cy.jdkdigital.invtweaks.util.ClientUtils;
+import cy.jdkdigital.invtweaks.util.Sorting;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import net.minecraft.client.Minecraft;
@@ -33,22 +33,13 @@ import net.neoforged.neoforge.items.ItemHandlerHelper;
 import net.neoforged.neoforge.network.PacketDistributor;
 
 import javax.annotation.Nullable;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Optional;
-import java.util.Set;
-import java.util.WeakHashMap;
+import java.util.*;
 import java.util.function.BooleanSupplier;
 import java.util.function.Predicate;
 import java.util.stream.IntStream;
 
 @Mod.EventBusSubscriber(modid = InvTweaksMod.MODID, value = Dist.CLIENT)
 public class ClientEvents {
-    private ClientEvents() {
-        // nothing to do
-    }
-
     public static final int MIN_SLOTS = 9;
 
     private static void requestSort(boolean isPlayer) {
@@ -78,19 +69,10 @@ public class ClientEvents {
     public static void onScreenEventInit(ScreenEvent.Init.Post event) {
         if (event.getScreen() instanceof AbstractContainerScreen<?> screen && !(screen instanceof CreativeModeInventoryScreen)) {
             // first, work with player inventory
-            Slot placement =
-                    getDefaultButtonPlacement(
-                            screen.getMenu().slots,
-                            slot -> slot.container instanceof Inventory);
-            if (placement != null
-                    && InvTweaksConfig.isSortEnabled(true)
-                    && InvTweaksConfig.isButtonEnabled(true)) {
+            Slot placement = getDefaultButtonPlacement(screen.getMenu().slots, slot -> slot.container instanceof Inventory);
+            if (placement != null && InvTweaksConfig.isSortEnabled(true) && InvTweaksConfig.isButtonEnabled(true)) {
                 try {
-                    event.addListener(
-                            new InvTweaksButtonSort(
-                                    screen.getGuiLeft() + placement.x + 17,
-                                    screen.getGuiTop() + placement.y,
-                                    btn -> requestSort(true)));
+                    event.addListener(new InvTweaksButtonSort(screen.getGuiLeft() + placement.x + 17, screen.getGuiTop() + placement.y, btn -> requestSort(true)));
                 } catch (Exception e) {
                     Throwables.throwIfUnchecked(e);
                     throw new RuntimeException(e);
@@ -98,24 +80,15 @@ public class ClientEvents {
             }
 
             // then, work with external inventory
-            String contClass = screen.getClass().getName();
-            InvTweaksConfig.ContOverride override = InvTweaksConfig.getSelfCompiledContOverrides().get(contClass);
+            InvTweaksConfig.ContOverride override = Sorting.getOverrides(screen.getMenu().getClass().getName());
 
-            if (!(screen instanceof EffectRenderingInventoryScreen)
-                    && !Optional.ofNullable(override)
-                    .filter(InvTweaksConfig.ContOverride::isSortDisabled)
-                    .isPresent()) {
+            if (!(screen instanceof EffectRenderingInventoryScreen) && !Optional.ofNullable(override).filter(InvTweaksConfig.ContOverride::isSortDisabled).isPresent()) {
                 int x = InvTweaksConfig.NO_POS_OVERRIDE, y = InvTweaksConfig.NO_POS_OVERRIDE;
                 if (override != null) {
                     x = override.getX();
                     y = override.getY();
                 }
-                placement =
-                        getDefaultButtonPlacement(
-                                screen.getMenu().slots,
-                                slot ->
-                                        !(slot.container instanceof Inventory
-                                                || slot.container instanceof CraftingContainer));
+                placement = getDefaultButtonPlacement(screen.getMenu().slots, slot -> !(slot.container instanceof Inventory || slot.container instanceof CraftingContainer));
                 if (placement != null) {
                     if (x == InvTweaksConfig.NO_POS_OVERRIDE) {
                         x = placement.x + 17;
@@ -124,15 +97,10 @@ public class ClientEvents {
                         y = placement.y;
                     }
                 }
-                // System.out.println(x+ " " +y);
                 if (InvTweaksConfig.isSortEnabled(false)) {
                     try {
                         if (InvTweaksConfig.isButtonEnabled(false)) {
-                            event.addListener(
-                                    new InvTweaksButtonSort(
-                                            screen.getGuiLeft() + x,
-                                            screen.getGuiTop() + y,
-                                            btn -> requestSort(false)));
+                            event.addListener(new InvTweaksButtonSort(screen.getGuiLeft() + x, screen.getGuiTop() + y, btn -> requestSort(false)));
                         }
                         screensWithExtSort.add(screen);
                     } catch (Exception e) {
