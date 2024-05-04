@@ -36,7 +36,6 @@ jobs:
           curseforge-id: 976858
           curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
 
-          github-generate-changelog: true
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
           name: ""
