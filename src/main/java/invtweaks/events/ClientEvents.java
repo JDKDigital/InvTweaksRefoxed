@@ -4,7 +4,9 @@ import com.google.common.base.Throwables;
 import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.blaze3d.systems.RenderSystem;
 import invtweaks.InvTweaksMod;
+import invtweaks.config.ContOverride;
 import invtweaks.config.InvTweaksConfig;
+import invtweaks.config.Ruleset;
 import invtweaks.gui.InvTweaksButtonSort;
 import invtweaks.network.NetworkDispatcher;
 import invtweaks.network.PacketSortInv;
@@ -51,11 +53,11 @@ public class ClientEvents {
 
     public static final int MIN_SLOTS = 9;
 
-    private static void requestSort(boolean isPlayer) {
+    private static void requestSort(boolean isPlayer, String screenClass) {
         if (ClientUtils.serverConnectionExists()) {
-            NetworkDispatcher.INSTANCE.sendToServer(new PacketSortInv(isPlayer));
+            NetworkDispatcher.INSTANCE.sendToServer(new PacketSortInv(isPlayer, screenClass));
         } else {
-            Sorting.executeSort(ClientUtils.safeGetPlayer(), isPlayer);
+            Sorting.executeSort(ClientUtils.safeGetPlayer(), isPlayer, screenClass);
         }
     }
 
@@ -78,10 +80,7 @@ public class ClientEvents {
     public static void onScreenEventInit(ScreenEvent.Init.Post event) {
         if (event.getScreen() instanceof AbstractContainerScreen<?> screen && !(screen instanceof CreativeModeInventoryScreen)) {
             // first, work with player inventory
-            Slot placement =
-                    getDefaultButtonPlacement(
-                            screen.getMenu().slots,
-                            slot -> slot.container instanceof Inventory);
+            Slot placement = getDefaultButtonPlacement(screen.getMenu().slots, slot -> slot.container instanceof Inventory);
             if (placement != null
                     && InvTweaksConfig.isSortEnabled(true)
                     && InvTweaksConfig.isButtonEnabled(true)) {
@@ -90,7 +89,7 @@ public class ClientEvents {
                             new InvTweaksButtonSort(
                                     screen.getGuiLeft() + placement.x + 17,
                                     screen.getGuiTop() + placement.y,
-                                    btn -> requestSort(true)));
+                                    btn -> requestSort(true, screen.getClass().getName())));
                 } catch (Exception e) {
                     Throwables.throwIfUnchecked(e);
                     throw new RuntimeException(e);
@@ -98,24 +97,17 @@ public class ClientEvents {
             }
 
             // then, work with external inventory
-            String contClass = screen.getClass().getName();
-            InvTweaksConfig.ContOverride override = InvTweaksConfig.getSelfCompiledContOverrides().get(contClass);
+            InvTweaksMod.LOGGER.info(screen.getClass().getName());
+            ContOverride override = InvTweaksConfig.getPlayerContOverride(Minecraft.getInstance().player, screen.getClass().getName(), screen.getMenu().getClass().getName());
+            var isSortDisabled = Optional.ofNullable(override).filter(ContOverride::isSortDisabled).isPresent();
 
-            if (!(screen instanceof EffectRenderingInventoryScreen)
-                    && !Optional.ofNullable(override)
-                    .filter(InvTweaksConfig.ContOverride::isSortDisabled)
-                    .isPresent()) {
+            if (!(screen instanceof EffectRenderingInventoryScreen) && !isSortDisabled) {
                 int x = InvTweaksConfig.NO_POS_OVERRIDE, y = InvTweaksConfig.NO_POS_OVERRIDE;
                 if (override != null) {
                     x = override.getX();
                     y = override.getY();
                 }
-                placement =
-                        getDefaultButtonPlacement(
-                                screen.getMenu().slots,
-                                slot ->
-                                        !(slot.container instanceof Inventory
-                                                || slot.container instanceof CraftingContainer));
+                placement = getDefaultButtonPlacement(screen.getMenu().slots, slot -> !(slot.container instanceof Inventory || slot.container instanceof CraftingContainer));
                 if (placement != null) {
                     if (x == InvTweaksConfig.NO_POS_OVERRIDE) {
                         x = placement.x + 17;
@@ -124,15 +116,11 @@ public class ClientEvents {
                         y = placement.y;
                     }
                 }
-                // System.out.println(x+ " " +y);
+
                 if (InvTweaksConfig.isSortEnabled(false)) {
                     try {
                         if (InvTweaksConfig.isButtonEnabled(false)) {
-                            event.addListener(
-                                    new InvTweaksButtonSort(
-                                            screen.getGuiLeft() + x,
-                                            screen.getGuiTop() + y,
-                                            btn -> requestSort(false)));
+                            event.addListener(new InvTweaksButtonSort(screen.getGuiLeft() + x, screen.getGuiTop() + y, btn -> requestSort(false, screen.getClass().getName())));
                         }
                         screensWithExtSort.add(screen);
                     } catch (Exception e) {
@@ -159,20 +147,17 @@ public class ClientEvents {
 
     @SubscribeEvent
     public static void onKeyPressed(ScreenEvent.KeyPressed.Pre event) {
-        if (event.getScreen() instanceof AbstractContainerScreen<?> screen
-                && !(screen instanceof CreativeModeInventoryScreen)
-                && !(screen.getFocused() instanceof EditBox)
-                && !isJEIKeyboardActive()) {
+        if (event.getScreen() instanceof AbstractContainerScreen<?> screen && !(screen instanceof CreativeModeInventoryScreen) && !(screen.getFocused() instanceof EditBox) && !isJEIKeyboardActive()) {
             if (InvTweaksConfig.isSortEnabled(true)
                     && KeyMappings.SORT_PLAYER.isActiveAndMatches(
                             InputConstants.getKey(event.getKeyCode(), event.getScanCode()))) {
-                requestSort(true);
+                requestSort(true, screen.getClass().getName());
             }
             if (InvTweaksConfig.isSortEnabled(false)
                     && screensWithExtSort.contains(event.getScreen())
                     && KeyMappings.SORT_INVENTORY.isActiveAndMatches(
                             InputConstants.getKey(event.getKeyCode(), event.getScanCode()))) {
-                requestSort(false);
+                requestSort(false, screen.getClass().getName());
             }
 
             Slot slot = screen.getSlotUnderMouse();
@@ -182,7 +167,7 @@ public class ClientEvents {
                         && (isPlayerSort || screensWithExtSort.contains(event.getScreen()))
                         && KeyMappings.SORT_EITHER.isActiveAndMatches(
                                 InputConstants.getKey(event.getKeyCode(), event.getScanCode()))) {
-                    requestSort(isPlayerSort);
+                    requestSort(isPlayerSort, screen.getClass().getName());
                 }
             }
         }
@@ -205,7 +190,7 @@ public class ClientEvents {
                 boolean isPlayerSort = slot.container instanceof Inventory;
                 if (InvTweaksConfig.isSortEnabled(isPlayerSort)
                         && (isPlayerSort || screensWithExtSort.contains(event.getScreen()))) {
-                    requestSort(isPlayerSort);
+                    requestSort(isPlayerSort, screen.getClass().getName());
                     event.setCanceled(true); // stop pick block event
                 }
             }
@@ -223,7 +208,7 @@ public class ClientEvents {
                 return;
             }
 
-            InvTweaksConfig.Ruleset rules = InvTweaksConfig.getSelfCompiledRules();
+            Ruleset rules = InvTweaksConfig.getSelfCompiledRules();
             IntList frozen =
                     Optional.ofNullable(rules.catToInventorySlots("/FROZEN"))
                             .map(IntArrayList::new) // prevent modification

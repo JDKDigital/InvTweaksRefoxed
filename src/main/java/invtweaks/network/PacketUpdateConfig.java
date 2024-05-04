@@ -3,6 +3,7 @@ package invtweaks.network;
 import com.electronwill.nightconfig.core.CommentedConfig;
 import com.electronwill.nightconfig.core.UnmodifiableConfig;
 import invtweaks.config.InvTweaksConfig;
+import invtweaks.config.Ruleset;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.network.NetworkEvent;
 
@@ -75,7 +76,7 @@ public class PacketUpdateConfig {
                                     InvTweaksConfig.cfgToCompiledCats(cats));
                             InvTweaksConfig.setPlayerRules(
                                     Objects.requireNonNull(ctx.get().getSender()),
-                                    new InvTweaksConfig.Ruleset(rules));
+                                    new Ruleset(rules));
                             InvTweaksConfig.setPlayerAutoRefill(ctx.get().getSender(), autoRefill);
                             InvTweaksConfig.setPlayerContOverrides(
                                     Objects.requireNonNull(ctx.get().getSender()),

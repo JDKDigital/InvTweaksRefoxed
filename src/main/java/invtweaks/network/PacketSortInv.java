@@ -2,6 +2,7 @@ package invtweaks.network;
 
 import invtweaks.InvTweaksMod;
 import invtweaks.util.Sorting;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.network.NetworkEvent;
 
@@ -10,19 +11,21 @@ import java.util.function.Supplier;
 
 public class PacketSortInv {
     private final boolean isPlayer;
+    private final String screenName;
 
-    public PacketSortInv(boolean isPlayer) {
+    public PacketSortInv(boolean isPlayer,String screenClass) {
         this.isPlayer = isPlayer;
+        this.screenName = screenClass;
     }
 
     public PacketSortInv(FriendlyByteBuf buf) {
-        this(buf.readBoolean());
+        this(buf.readBoolean(), buf.readUtf());
     }
 
     public void handle(Supplier<NetworkEvent.Context> ctx) {
         ctx.get().enqueueWork(() -> {
             try {
-                Sorting.executeSort(ctx.get().getSender(), isPlayer);
+                Sorting.executeSort(ctx.get().getSender(), isPlayer, screenName);
             } catch (Exception e) {
                 // can potentially throw exceptions which are silenced by enqueueWork
                 InvTweaksMod.LOGGER.error("Failed to sort inventory", e);
@@ -33,5 +36,6 @@ public class PacketSortInv {
 
     public void encode(FriendlyByteBuf buf) {
         buf.writeBoolean(isPlayer);
+        buf.writeUtf(screenName);
     }
 }
