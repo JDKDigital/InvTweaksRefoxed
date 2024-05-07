@@ -4,17 +4,55 @@ import com.electronwill.nightconfig.core.CommentedConfig;
 import com.electronwill.nightconfig.core.UnmodifiableConfig;
 import invtweaks.InvTweaksMod;
 import invtweaks.config.InvTweaksConfig;
-import net.minecraft.network.FriendlyByteBuf;
+import invtweaks.config.Ruleset;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
-import net.neoforged.neoforge.network.handling.PlayPayloadContext;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
+import net.neoforged.neoforge.network.handling.IPayloadHandler;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class PacketUpdateConfig implements CustomPacketPayload {
-    public static final ResourceLocation ID = new ResourceLocation(InvTweaksMod.MODID, "packet_update_config");
+public class PacketUpdateConfig implements CustomPacketPayload, IPayloadHandler<PacketUpdateConfig>
+{
+    public static final Type<PacketUpdateConfig> TYPE = new Type<>(new ResourceLocation(InvTweaksMod.MODID, "packet_update_config"));
+    public static final StreamCodec<RegistryFriendlyByteBuf, PacketUpdateConfig> CODEC = new StreamCodec<>()
+    {
+        @Override
+        public PacketUpdateConfig decode(RegistryFriendlyByteBuf buff) {
+            return new PacketUpdateConfig(buff);
+        }
+
+        @Override
+        public void encode(RegistryFriendlyByteBuf buffer, PacketUpdateConfig packetUpdateConfig) {
+            buffer.writeVarInt(packetUpdateConfig.cats.size());
+            for (UnmodifiableConfig subCfg : packetUpdateConfig.cats) {
+                buffer.writeUtf(subCfg.getOrElse("name", ""));
+                List<String> spec = subCfg.getOrElse("spec", Collections.emptyList());
+                buffer.writeVarInt(spec.size());
+                for (String subSpec : spec) {
+                    buffer.writeUtf(subSpec);
+                }
+            }
+            buffer.writeVarInt(packetUpdateConfig.rules.size());
+            for (String subRule : packetUpdateConfig.rules) {
+                buffer.writeUtf(subRule);
+            }
+            buffer.writeVarInt(packetUpdateConfig.contOverrides.size());
+            for (UnmodifiableConfig contOverride : packetUpdateConfig.contOverrides) {
+                buffer.writeUtf(contOverride.getOrElse("containerClass", ""));
+                int x = contOverride.getIntOrElse("x", InvTweaksConfig.NO_POS_OVERRIDE);
+                int y = contOverride.getIntOrElse("y", InvTweaksConfig.NO_POS_OVERRIDE);
+                buffer.writeInt(x).writeInt(y);
+                buffer.writeUtf(contOverride.getOrElse("sortRange", InvTweaksConfig.NO_SPEC_OVERRIDE));
+            }
+            buffer.writeBoolean(packetUpdateConfig.autoRefill);
+        }
+    };
+
     private final List<UnmodifiableConfig> cats;
     private final List<String> rules;
     private final List<UnmodifiableConfig> contOverrides;
@@ -25,18 +63,14 @@ public class PacketUpdateConfig implements CustomPacketPayload {
         this(Collections.emptyList(), Collections.emptyList(), Collections.emptyList(), false);
     }
 
-    public PacketUpdateConfig(
-            List<UnmodifiableConfig> cats,
-            List<String> rules,
-            List<UnmodifiableConfig> contOverrides,
-            boolean autoRefill) {
+    public PacketUpdateConfig(List<UnmodifiableConfig> cats, List<String> rules, List<UnmodifiableConfig> contOverrides, boolean autoRefill) {
         this.cats = cats;
         this.rules = rules;
-        this.autoRefill = autoRefill;
         this.contOverrides = contOverrides;
+        this.autoRefill = autoRefill;
     }
 
-    public PacketUpdateConfig(FriendlyByteBuf buf) {
+    public PacketUpdateConfig(RegistryFriendlyByteBuf buf) {
         this.cats = new ArrayList<>();
         int catsSize = buf.readVarInt();
         for (int i = 0; i < catsSize; ++i) {
@@ -68,43 +102,18 @@ public class PacketUpdateConfig implements CustomPacketPayload {
         this.autoRefill = buf.readBoolean();
     }
 
-    public static void handle(PacketUpdateConfig packet, PlayPayloadContext ctx) {
-        ctx.workHandler().submitAsync(() -> ctx.player().ifPresent(p -> {
-            InvTweaksConfig.setPlayerCats(p, InvTweaksConfig.cfgToCompiledCats(packet.cats));
-            InvTweaksConfig.setPlayerRules(p, new InvTweaksConfig.Ruleset(packet.rules));
-            InvTweaksConfig.setPlayerAutoRefill(p, packet.autoRefill);
-            InvTweaksConfig.setPlayerContOverrides(p, InvTweaksConfig.cfgToCompiledContOverrides(packet.contOverrides));
-        }));
+    @Override
+    public void handle(PacketUpdateConfig packet, IPayloadContext ctx) {
+        ctx.enqueueWork(() -> {
+            InvTweaksConfig.setPlayerCats(ctx.player(), InvTweaksConfig.cfgToCompiledCats(packet.cats));
+            InvTweaksConfig.setPlayerRules(ctx.player(), new Ruleset(packet.rules));
+            InvTweaksConfig.setPlayerAutoRefill(ctx.player(), packet.autoRefill);
+            InvTweaksConfig.setPlayerContOverrides(ctx.player(), InvTweaksConfig.cfgToCompiledContOverrides(packet.contOverrides));
+        });
     }
 
     @Override
-    public void write(final FriendlyByteBuf buf) {
-        buf.writeVarInt(cats.size());
-        for (UnmodifiableConfig subCfg : cats) {
-            buf.writeUtf(subCfg.getOrElse("name", ""));
-            List<String> spec = subCfg.getOrElse("spec", Collections.emptyList());
-            buf.writeVarInt(spec.size());
-            for (String subSpec : spec) {
-                buf.writeUtf(subSpec);
-            }
-        }
-        buf.writeVarInt(rules.size());
-        for (String subRule : rules) {
-            buf.writeUtf(subRule);
-        }
-        buf.writeVarInt(contOverrides.size());
-        for (UnmodifiableConfig contOverride : contOverrides) {
-            buf.writeUtf(contOverride.getOrElse("containerClass", ""));
-            int x = contOverride.getIntOrElse("x", InvTweaksConfig.NO_POS_OVERRIDE);
-            int y = contOverride.getIntOrElse("y", InvTweaksConfig.NO_POS_OVERRIDE);
-            buf.writeInt(x).writeInt(y);
-            buf.writeUtf(contOverride.getOrElse("sortRange", InvTweaksConfig.NO_SPEC_OVERRIDE));
-        }
-        buf.writeBoolean(autoRefill);
-    }
-
-    @Override
-    public ResourceLocation id() {
-        return ID;
+    public Type<? extends CustomPacketPayload> type() {
+        return TYPE;
     }
 }

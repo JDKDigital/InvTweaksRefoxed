@@ -1,54 +1,28 @@
 package invtweaks.config;
 
-import com.electronwill.nightconfig.core.CommentedConfig;
 import com.electronwill.nightconfig.core.UnmodifiableConfig;
 import com.electronwill.nightconfig.core.file.CommentedFileConfig;
 import com.electronwill.nightconfig.core.io.WritingMode;
 import com.google.common.collect.ImmutableMap;
-import invtweaks.InvTweaksMod;
 import invtweaks.network.PacketUpdateConfig;
-import invtweaks.util.Utils;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.ints.IntList;
-import it.unimi.dsi.fastutil.ints.IntLists;
-import net.minecraft.ResourceLocationException;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.tags.TagKey;
 import net.minecraft.util.thread.BlockableEventLoop;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.BlockItem;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.level.block.Block;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.LogicalSide;
-import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.event.config.ModConfigEvent;
 import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.neoforge.common.ModConfigSpec;
 import net.neoforged.neoforge.common.util.LogicalSidedProvider;
 
-import javax.annotation.Nullable;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
-import java.util.function.Predicate;
+import java.util.*;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
-@Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD)
+@EventBusSubscriber(bus = EventBusSubscriber.Bus.MOD)
 public class InvTweaksConfig {
     public static final ModConfigSpec CLIENT_CONFIG;
     /**
@@ -59,37 +33,41 @@ public class InvTweaksConfig {
     public static final String NO_SPEC_OVERRIDE = "default";
     public static final Map<String, Category> DEFAULT_CATS =
             ImmutableMap.<String, Category>builder()
-                    .put("sword", new Category("/instanceof:net.minecraft.item.SwordItem"))
-                    .put("axe", new Category("/instanceof:net.minecraft.item.AxeItem"))
-                    .put("pickaxe", new Category("/instanceof:net.minecraft.item.PickaxeItem"))
-                    .put("shovel", new Category("/instanceof:net.minecraft.item.ShovelItem"))
+                    .put("sword", new Category("/instanceof:net.minecraft.world.item.SwordItem"))
+                    .put("axe", new Category("/instanceof:net.minecraft.world.item.AxeItem"))
+                    .put("pickaxe", new Category("/instanceof:net.minecraft.world.item.PickaxeItem"))
+                    .put("shovel", new Category("/instanceof:net.minecraft.world.item.ShovelItem"))
+                    .put("hoe", new Category("/instanceof:net.minecraft.world.item.HoeItem"))
                     .put(
                             "acceptableFood",
                             new Category(
                                     String.format(
-                                            "/instanceof:net.minecraft.item.Food; !%s; !%s; !%s; !%s",
+                                            "/isFood:; !%s; !%s; !%s; !%s",
                                             BuiltInRegistries.ITEM.getKey(Items.ROTTEN_FLESH),
                                             BuiltInRegistries.ITEM.getKey(Items.SPIDER_EYE),
                                             BuiltInRegistries.ITEM.getKey(Items.POISONOUS_POTATO),
                                             BuiltInRegistries.ITEM.getKey(Items.PUFFERFISH))))
-                    .put(
-                            "torch",
-                            new Category(BuiltInRegistries.ITEM.getKey(Items.TORCH).toString()))
-                    .put("cheapBlocks", new Category("/tag:minecraft:cobblestone", "/tag:minecraft:dirt"))
-                    .put("blocks", new Category("/instanceof:net.minecraft.item.BlockItem"))
+                    .put("torch", new Category(BuiltInRegistries.ITEM.getKey(Items.TORCH).toString()))
+                    .put("cheapBlocks", new Category("/tag:forge:cobblestone", "/tag:minecraft:dirt"))
+                    .put("blocks", new Category("/instanceof:net.minecraft.world.item.BlockItem"))
                     .build();
     public static final List<String> DEFAULT_RAW_RULES = Arrays.asList("D /LOCKED", "A1-C9 /OTHER");
     public static final Ruleset DEFAULT_RULES = new Ruleset(DEFAULT_RAW_RULES);
     public static final Map<String, ContOverride> DEFAULT_CONT_OVERRIDES =
             ImmutableMap.<String, ContOverride>builder()
-                    .put("com.tfar.craftingstation.CraftingStationContainer", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""))
+                    .put("appeng.client.gui.implementations.*Screen", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""))
+                    .put("appeng.client.gui.me.items.*Screen", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""))
+                    .put("de.mari_023.ae2wtlib.wct.*Screen", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""))
+                    .put("com.github.glodblock.epp.client.gui.*", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""))
+                    .put("org.cyclops.integrateddynamics.inventory.container.*", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""))
+                    .put("org.cyclops.integratedterminals.inventory.container.ContainerTerminalStoragePart", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""))
+                    .put("com.refinedmods.refinedstorage.screen.*", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""))
+                    .put("net.p3pp3rf1y.sophisticatedbackpacks.common.gui.BackpackContainer", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""))
+                    .put("net.p3pp3rf1y.sophisticatedstorage.common.gui.StorageContainerMenu", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""))
+                    .put("tfar.craftingstation.CraftingStationMenu", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""))
                     .put("tfar.dankstorage.container.DankContainers", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE,""))
                     .put("mcjty.rftoolsutility.modules.crafter.blocks.CrafterContainer", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""))
-                    .put("appeng.container.implementations.InterfaceTerminalContainer", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""))
-                    .put("appeng.container.implementations.CraftingTermContainer", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""))
-                    .put("appeng.container.implementations.PatternTermContainer", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""))
-                    .put("appeng.container.implementations.WirelessTermContainer", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""))
-                    .put("net.blay09.mods.excompressum.container.AutoSieveContainer", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""))
+                    .put("gripe._90.megacells.menu.MEGAInterfaceMenu", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""))
 
                     .build();
 
@@ -247,8 +225,7 @@ public class InvTweaksConfig {
         if (isDirty) {
             COMPILED_CATS = cfgToCompiledCats((List<UnmodifiableConfig>) CATS.get());
             COMPILED_RULES = new Ruleset((List<String>) RULES.get());
-            COMPILED_CONT_OVERRIDES =
-                    cfgToCompiledContOverrides((List<UnmodifiableConfig>) CONT_OVERRIDES.get());
+            COMPILED_CONT_OVERRIDES = cfgToCompiledContOverrides((List<UnmodifiableConfig>) CONT_OVERRIDES.get());
         }
     }
 
@@ -317,11 +294,24 @@ public class InvTweaksConfig {
         return playerAutoRefill.contains(ent.getUUID());
     }
 
-    public static Map<String, ContOverride> getPlayerContOverrides(Player ent) {
+    public static ContOverride getPlayerContOverride(Player ent, String screenClass, String contClass) {
+        var map = playerToContOverrides.getOrDefault(ent.getUUID(), DEFAULT_CONT_OVERRIDES);
         if (FMLEnvironment.dist.isClient()) {
-            return getSelfCompiledContOverrides();
+            map = getSelfCompiledContOverrides();
         }
-        return playerToContOverrides.getOrDefault(ent.getUUID(), DEFAULT_CONT_OVERRIDES);
+        if (map.containsKey(screenClass)) {
+            return map.get(screenClass);
+        }
+        if (map.containsKey(contClass)) {
+            return map.get(contClass);
+        }
+        for (String s : map.keySet()) {
+            var regex = Pattern.compile(s);
+            if (regex.matcher(screenClass).matches() || regex.matcher(contClass).matches()) {
+                return map.get(s);
+            }
+        }
+        return null;
     }
 
     public static boolean isSortEnabled(boolean isPlayerSort) {
@@ -346,7 +336,7 @@ public class InvTweaksConfig {
             String name = subCfg.getOrElse("name", "");
             if (!name.equals("") && !name.startsWith("/")) {
                 catsMap.put(
-                        name, new InvTweaksConfig.Category(subCfg.getOrElse("spec", Collections.emptyList())));
+                        name, new Category(subCfg.getOrElse("spec", Collections.emptyList())));
             }
         }
         return catsMap;
@@ -363,189 +353,5 @@ public class InvTweaksConfig {
                             subCfg.getOrElse("sortRange", NO_SPEC_OVERRIDE)));
         }
         return res;
-    }
-
-    public static class Category {
-        private final List<String> spec;
-        private final List<List<Predicate<ItemStack>>> compiledSpec = new ArrayList<>();
-
-        public Category(List<String> spec) {
-            this.spec = spec;
-            for (String subspec : spec) {
-                List<Predicate<ItemStack>> compiledSubspec = new ArrayList<>();
-                for (String clause : subspec.split("\\s*;\\s*")) {
-                    compileClause(clause).ifPresent(compiledSubspec::add);
-                }
-                compiledSpec.add(compiledSubspec);
-            }
-        }
-
-        public Category(String... spec) {
-            this(Arrays.asList(spec));
-        }
-
-        private static Optional<Predicate<ItemStack>> compileClause(String clause) {
-            if (clause.startsWith("!")) {
-                return compileClause(clause.substring(1)).map(Predicate::negate);
-            }
-
-            String[] parts = clause.split(":", 2);
-            if (parts[0].equals("/tag")) {
-                TagKey<Item> itemKey = TagKey.create(BuiltInRegistries.ITEM.key(), new ResourceLocation(parts[1]));
-                TagKey<Block> blockKey = TagKey.create(BuiltInRegistries.BLOCK.key(), new ResourceLocation(parts[1]));
-
-                return Optional.of(stack -> stack.is(itemKey) || (
-                            stack.getItem() instanceof BlockItem blockItem
-                            && blockItem.getBlock().defaultBlockState().is(blockKey))
-                );
-            } else if (parts[0].equals("/instanceof")
-                    || parts[0].equals("/class")) { // use this for e.g. pickaxes
-                try {
-                    Class<?> clazz = Class.forName(parts[1]);
-                    if (parts[0].equals("/instanceof")) {
-                        return Optional.of(st -> clazz.isInstance(st.getItem()));
-                    } else {
-                        return Optional.of(st -> st.getItem().getClass().equals(clazz));
-                    }
-                } catch (ClassNotFoundException e) {
-                    InvTweaksMod.LOGGER.warn("Class not found! Ignoring clause");
-                    return Optional.empty();
-                }
-            } else { // default to standard item checking
-                try {
-                    return Optional.of(
-                            st -> Objects.equals(BuiltInRegistries.ITEM.getKey(st.getItem()), new ResourceLocation(clause)));
-                } catch (ResourceLocationException e) {
-                    InvTweaksMod.LOGGER.warn("Invalid item resource location found.");
-                    return Optional.empty();
-                }
-            }
-        }
-
-        // returns an index for sorting within a category
-        public int checkStack(ItemStack stack) {
-            return IntStream.range(0, compiledSpec.size())
-                    .filter(idx -> compiledSpec.get(idx).stream().allMatch(pr -> pr.test(stack)))
-                    .findFirst()
-                    .orElse(-1);
-        }
-
-        public CommentedConfig toConfig(String catName) {
-            CommentedConfig result = CommentedConfig.inMemory();
-            result.set("name", catName);
-            result.set("spec", spec);
-            return result;
-        }
-    }
-
-    public static class Ruleset {
-        private final List<String> rules;
-        private final Map<String, IntList> compiledRules = new LinkedHashMap<>();
-        private final IntList compiledFallbackRules =
-                new IntArrayList(Utils.gridSpecToSlots("A1-D9", false));
-
-        public Ruleset(List<String> rules) {
-            this.rules = rules;
-            for (String rule : rules) {
-                String[] parts = rule.split("\\s+", 2);
-                if (parts.length == 2) {
-                    try {
-                        compiledRules
-                                .computeIfAbsent(parts[1], k -> new IntArrayList())
-                                .addAll(IntArrayList.wrap(Utils.gridSpecToSlots(parts[0], false)));
-                        if (parts[1].equals("/OTHER")) {
-                            compiledFallbackRules.clear();
-                            compiledFallbackRules.addAll(
-                                    IntArrayList.wrap(Utils.gridSpecToSlots(parts[0], true)));
-                        }
-                    } catch (IllegalArgumentException e) {
-                        InvTweaksMod.LOGGER.warn("Bad slot target: " + parts[0]);
-                        // throw e;
-                    }
-                } else {
-                    InvTweaksMod.LOGGER.warn("Syntax error in rule: " + rule);
-                }
-            }
-        }
-
-        @SuppressWarnings("unused")
-        public Ruleset(String... rules) {
-            this(Arrays.asList(rules));
-        }
-
-        @SuppressWarnings("unused")
-        public Ruleset(Ruleset rules) {
-            this.rules = rules.rules;
-            this.compiledRules.putAll(rules.compiledRules);
-            this.compiledFallbackRules.clear();
-            this.compiledFallbackRules.addAll(rules.compiledFallbackRules);
-        }
-
-        public IntList catToInventorySlots(String cat) {
-            return compiledRules.get(cat);
-        }
-
-        public IntList fallbackInventoryRules() {
-            return compiledFallbackRules;
-        }
-    }
-
-    public static class ContOverride {
-        private final int x, y;
-        @Nullable
-        private final IntList sortRange;
-        private final String sortRangeSpec;
-
-        public ContOverride(int x, int y, String sortRangeSpec) {
-            this.x = x;
-            this.y = y;
-            this.sortRangeSpec = sortRangeSpec;
-            IntList tmp = null;
-            if (sortRangeSpec.isEmpty()) {
-                tmp = IntLists.EMPTY_LIST;
-            } else if (!sortRangeSpec.equalsIgnoreCase(NO_SPEC_OVERRIDE)) {
-                try {
-                    tmp =
-                            Arrays.stream(sortRangeSpec.split("\\s*,\\s*"))
-                                    .flatMapToInt(
-                                            str -> {
-                                                String[] rangeSpec = str.split("\\s*-\\s*");
-                                                return IntStream.rangeClosed(
-                                                        Integer.parseInt(rangeSpec[0]), Integer.parseInt(rangeSpec[1]));
-                                            })
-                                    .collect(IntArrayList::new, IntList::add, IntList::addAll);
-                } catch (NumberFormatException e) {
-                    InvTweaksMod.LOGGER.warn("Invalid slot spec: " + sortRangeSpec);
-                    tmp = IntLists.EMPTY_LIST;
-                }
-            }
-            sortRange = tmp;
-        }
-
-        public int getX() {
-            return x;
-        }
-
-        public int getY() {
-            return y;
-        }
-
-        public @Nullable
-        IntList getSortRange() {
-            return sortRange;
-        }
-
-        public boolean isSortDisabled() {
-            return sortRange != null && sortRange.isEmpty();
-        }
-
-        public CommentedConfig toConfig(String contClass) {
-            CommentedConfig result = CommentedConfig.inMemory();
-            result.set("containerClass", contClass);
-            if (x != NO_POS_OVERRIDE) result.set("x", x);
-            if (y != NO_POS_OVERRIDE) result.set("y", y);
-            if (!sortRangeSpec.equalsIgnoreCase(NO_SPEC_OVERRIDE)) result.set("sortRange", sortRangeSpec);
-            return result;
-        }
     }
 }

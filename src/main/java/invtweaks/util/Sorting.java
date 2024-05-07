@@ -4,12 +4,16 @@ import com.google.common.base.Equivalence;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import com.google.common.collect.Streams;
+import invtweaks.config.Category;
+import invtweaks.config.ContOverride;
 import invtweaks.config.InvTweaksConfig;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.ints.IntLists;
+import invtweaks.config.Ruleset;
+import it.unimi.dsi.fastutil.ints.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.MultiPlayerGameMode;
 import net.minecraft.server.level.ServerPlayer;
@@ -44,16 +48,15 @@ public class Sorting {
         // nothing to do
     }
 
-    public static void executeSort(Player player, boolean isPlayerSort) {
+    public static void executeSort(Player player, boolean isPlayerSort, String screenClass) {
         if (isPlayerSort) {
-            Map<String, InvTweaksConfig.Category> cats = InvTweaksConfig.getPlayerCats(player);
-            InvTweaksConfig.Ruleset rules = InvTweaksConfig.getPlayerRules(player);
+            Map<String, Category> cats = InvTweaksConfig.getPlayerCats(player);
+            Ruleset rules = InvTweaksConfig.getPlayerRules(player);
             IntList lockedSlots =
                     Optional.ofNullable(rules.catToInventorySlots("/LOCKED"))
                             .<IntList>map(IntArrayList::new) // copy list to prevent modification
                             .orElseGet(IntArrayList::new);
-            lockedSlots.addAll(
-                    Optional.ofNullable(rules.catToInventorySlots("/FROZEN")).orElse(IntLists.EMPTY_LIST));
+            lockedSlots.addAll(Optional.ofNullable(rules.catToInventorySlots("/FROZEN")).orElse(IntLists.EMPTY_LIST));
             lockedSlots.sort(null);
 
             if (player instanceof ServerPlayer serverPlayer) {
@@ -66,36 +69,35 @@ public class Sorting {
 
             // check if an inventory is open
             if (cont != player.inventoryMenu) {
-                String contClass = cont.getClass().getName();
-                InvTweaksConfig.ContOverride override =
-                        InvTweaksConfig.getPlayerContOverrides(player).get(contClass);
+                ContOverride override = InvTweaksConfig.getPlayerContOverride(player, screenClass, cont.getClass().getName());
+                var isSortDisabled = Optional.ofNullable(override).filter(ContOverride::isSortDisabled).isPresent();
 
-                if (override != null && override.isSortDisabled()) return;
+                if (!isSortDisabled) {
+                    List<Slot> validSlots =
+                            (override != null && override.getSortRange() != null
+                                    ? override.getSortRange().intStream()
+                                    .filter(Objects::nonNull)
+                                    .filter(idx -> 0 <= idx && idx < cont.slots.size())
+                                    .mapToObj(cont.slots::get)
+                                    : cont.slots.stream())
+                                    .filter(slot -> !(slot.container instanceof Inventory))
+                                    .filter(
+                                            slot ->
+                                                    (slot.mayPickup(player) && slot.mayPlace(slot.getItem()))
+                                                            || !slot.hasItem())
+                                    .collect(Collectors.toCollection(ArrayList::new));
 
-                List<Slot> validSlots =
-                        (override != null && override.getSortRange() != null
-                                ? override.getSortRange().intStream()
-                                .filter(Objects::nonNull)
-                                .filter(idx -> 0 <= idx && idx < cont.slots.size())
-                                .mapToObj(cont.slots::get)
-                                : cont.slots.stream())
-                                .filter(slot -> !(slot.container instanceof Inventory))
-                                .filter(
-                                        slot ->
-                                                (slot.mayPickup(player) && slot.mayPlace(slot.getItem()))
-                                                        || !slot.hasItem())
-                                .collect(Collectors.toCollection(ArrayList::new));
-
-                if (player instanceof ServerPlayer serverPlayer) {
-                    inventorySortServer(serverPlayer, validSlots);
-                } else {
-                    inventorySortClient(player, validSlots);
+                    if (player instanceof ServerPlayer serverPlayer) {
+                        inventorySortServer(serverPlayer, validSlots);
+                    } else {
+                        inventorySortClient(player, validSlots);
+                    }
                 }
             }
         }
     }
 
-    public static void playerSortClient(Player player, Map<String, InvTweaksConfig.Category> cats, InvTweaksConfig.Ruleset rules, IntList lockedSlots) {
+    public static void playerSortClient(Player player, Map<String, Category> cats, Ruleset rules, IntList lockedSlots) {
         Inventory inv = player.getInventory();
         MultiPlayerGameMode pc = Minecraft.getInstance().gameMode;
         Int2ObjectMap<Slot> indexToSlot =
@@ -127,10 +129,7 @@ public class Sorting {
         stackWs.sort(
                 Comparator.comparing(Equivalence.Wrapper::get, Utils.FALLBACK_COMPARATOR));
 
-        // System.out.println("SZ: "+gatheredSlots.size());
-        for (Map.Entry<String, InvTweaksConfig.Category> ent : cats.entrySet()) {
-            // System.out.println(gatheredSlots.values().stream().flatMap(s ->
-            // s.stream()).count());
+        for (Map.Entry<String, Category> ent : cats.entrySet()) {
             IntList specificRules = rules.catToInventorySlots(ent.getKey());
             if (specificRules == null) specificRules = IntLists.EMPTY_LIST;
             specificRules =
@@ -138,8 +137,7 @@ public class Sorting {
                             .filter(idx -> Collections.binarySearch(lockedSlots, idx) < 0)
                             .mapToInt(v -> v)
                             .collect(IntArrayList::new, IntList::add, IntList::addAll);
-            // System.out.println(ent.getKey());
-            // System.out.println(specificRules);
+
             List<Slot> specificRulesSlots =
                     specificRules.stream()
                             .map(
@@ -162,14 +160,13 @@ public class Sorting {
                         .distinct()
                         .mapToObj(indexToSlot::get)
                         .collect(Collectors.toCollection(ArrayList::new));
-        // System.out.println(Arrays.toString(fallbackList.stream().mapToInt(slot ->
-        // slot.getSlotIndex()).toArray()));
+
         Client.processCategoryClient(
                 player, pc, gatheredSlots, stackWs, null, fallbackList.listIterator());
 
     }
 
-    public static void playerSortServer(ServerPlayer player, Map<String, InvTweaksConfig.Category> cats, InvTweaksConfig.Ruleset rules, IntList lockedSlots) {
+    public static void playerSortServer(ServerPlayer player, Map<String, Category> cats, Ruleset rules, IntList lockedSlots) {
         Inventory inv = player.getInventory();
 
         List<ItemStack> stacks =
@@ -189,7 +186,7 @@ public class Sorting {
             }
         }
 
-        for (Map.Entry<String, InvTweaksConfig.Category> ent : cats.entrySet()) {
+        for (Map.Entry<String, Category> ent : cats.entrySet()) {
             IntList specificRules = rules.catToInventorySlots(ent.getKey());
             if (specificRules == null) specificRules = IntLists.EMPTY_LIST;
             specificRules =
@@ -308,7 +305,7 @@ public class Sorting {
                 MultiPlayerGameMode pc,
                 Map<Equivalence.Wrapper<ItemStack>, Set<Slot>> gatheredSlots,
                 List<Equivalence.Wrapper<ItemStack>> stackWs,
-                InvTweaksConfig.Category cat,
+                Category cat,
                 ListIterator<Slot> toIt) {
             List<Equivalence.Wrapper<ItemStack>> subStackWs =
                     cat == null
@@ -330,9 +327,6 @@ public class Sorting {
                         toModify.remove(displacedPair.getKey());
                         toModify.add(displacedPair.getValue());
                     }
-                    // System.out.println(gatheredSlots.get(stackW).size());
-                    // System.out.println("HAS_PREV: "+fromIt.hasPrevious());
-                    // System.out.println(gatheredSlots.get(stackW).size());
                 }
             }
             stackWs.removeIf(sw -> gatheredSlots.get(sw).isEmpty());
@@ -414,7 +408,7 @@ public class Sorting {
                         // Click to put this item into the origin slot, which is guaranteed to be free
                         playerController.handleInventoryMouseClick(player.containerMenu.containerId, originSlot.index, 0, ClickType.PICKUP, player);
 
-                        if (originSlot.hasItem() && !ItemHandlerHelper.canItemStacksStack(originSlot.getItem(), destinationSlot.getItem())) {
+                        if (originSlot.hasItem() && !ItemStack.isSameItemSameComponents(originSlot.getItem(), destinationSlot.getItem())) {
                             // This iteration is now complete.
                             completedCurrentItemSwap = true;
                             // Remember that the item that was in destination is now moved to origin...

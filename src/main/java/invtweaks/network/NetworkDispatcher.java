@@ -2,21 +2,21 @@ package invtweaks.network;
 
 import invtweaks.InvTweaksMod;
 import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.Mod;
-import net.neoforged.neoforge.network.event.RegisterPayloadHandlerEvent;
-import net.neoforged.neoforge.network.registration.IPayloadRegistrar;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
+import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
-@Mod.EventBusSubscriber(modid = InvTweaksMod.MODID, bus = Mod.EventBusSubscriber.Bus.MOD)
+@EventBusSubscriber(modid = InvTweaksMod.MODID, bus = EventBusSubscriber.Bus.MOD)
 public class NetworkDispatcher {
     private NetworkDispatcher() {
         // nothing to do
     }
 
     @SubscribeEvent
-    public static void register(final RegisterPayloadHandlerEvent event) {
-        final IPayloadRegistrar registrar = event.registrar(InvTweaksMod.MODID).optional();
+    public static void register(final RegisterPayloadHandlersEvent event) {
+        final PayloadRegistrar registrar = event.registrar(InvTweaksMod.MODID);
 
-        registrar.play(PacketSortInv.ID, PacketSortInv::new, handler -> handler.server(PacketSortInv::handle));
-        registrar.play(PacketUpdateConfig.ID, PacketUpdateConfig::new, handler -> handler.server(PacketUpdateConfig::handle));
+        registrar.playToServer(PacketSortInv.TYPE, PacketSortInv.CODEC, (payload, context) -> payload.handle(payload, context));
+        registrar.playToServer(PacketUpdateConfig.TYPE, PacketUpdateConfig.CODEC, (payload, context) -> payload.handle(payload, context));
     }
 }

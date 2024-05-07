@@ -2,6 +2,8 @@ package invtweaks;
 
 import invtweaks.config.InvTweaksConfig;
 import invtweaks.network.NetworkDispatcher;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.ModLoadingContext;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.config.ModConfig;
@@ -15,9 +17,8 @@ public class InvTweaksMod {
     public static final String MODID = "invtweaks";
     public static final Logger LOGGER = LogManager.getLogger(InvTweaksMod.MODID);
 
-    @SuppressWarnings("java:S1118")
-    public InvTweaksMod() {
-        ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, InvTweaksConfig.CLIENT_CONFIG);
+    public InvTweaksMod(IEventBus modEventBus, ModContainer modContainer) {
+        modContainer.registerConfig(ModConfig.Type.CLIENT, InvTweaksConfig.CLIENT_CONFIG);
 
         InvTweaksConfig.loadConfig(InvTweaksConfig.CLIENT_CONFIG, FMLPaths.CONFIGDIR.get().resolve("invtweaks-client.toml"));
     }

@@ -4,6 +4,7 @@ import com.google.common.base.Equivalence;
 import com.google.common.collect.Streams;
 import it.unimi.dsi.fastutil.ints.IntArrays;
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
+import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
@@ -24,12 +25,12 @@ public class Utils {
     }
 
     public static final Equivalence<ItemStack> STACKABLE =
-            new Equivalence<ItemStack>() {
-
+            new Equivalence<>()
+            {
                 @Override
                 @ParametersAreNonnullByDefault
                 protected boolean doEquivalent(ItemStack a, ItemStack b) {
-                    return ItemHandlerHelper.canItemStacksStack(a, b);
+                    return ItemStack.isSameItemSameComponents(a, b);
                 }
 
                 @Override
@@ -37,8 +38,8 @@ public class Utils {
                     List<Object> objs = new ArrayList<>(2);
                     if (!t.isEmpty()) {
                         objs.add(t.getItem());
-                        if (t.hasTag()) {
-                            objs.add(t.getTag());
+                        if (!t.getComponents().equals(DataComponentMap.EMPTY)) {
+                            objs.add(t.getComponents());
                         }
                     }
                     return Arrays.hashCode(objs.toArray());
