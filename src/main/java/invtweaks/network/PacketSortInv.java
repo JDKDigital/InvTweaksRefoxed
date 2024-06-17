@@ -14,7 +14,7 @@ public class PacketSortInv implements CustomPacketPayload, IPayloadHandler<Packe
     private final boolean isPlayer;
     private final String screenName;
 
-    public static final Type<PacketSortInv> TYPE = new Type<>(new ResourceLocation(InvTweaksMod.MODID, "packet_sort_inv"));
+    public static final Type<PacketSortInv> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(InvTweaksMod.MODID, "packet_sort_inv"));
     public static final StreamCodec<RegistryFriendlyByteBuf, PacketSortInv> CODEC = new StreamCodec<>()
     {
         @Override

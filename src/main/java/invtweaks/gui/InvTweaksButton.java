@@ -9,7 +9,7 @@ import net.neoforged.neoforge.client.gui.widget.ExtendedButton;
 
 public class InvTweaksButton extends ExtendedButton {
     protected static final ResourceLocation button =
-            new ResourceLocation(InvTweaksMod.MODID, "textures/gui/button_sprites.png");
+            ResourceLocation.fromNamespaceAndPath(InvTweaksMod.MODID, "textures/gui/button_sprites.png");
     private final int tx;
     private final int ty;
 

@@ -22,6 +22,9 @@ issueTrackerURL="https://github.com/JDKDigital/InvTweaksRefoxed/issues"
     logoFile="logo.png"
     displayTest="IGNORE_ALL_VERSION"
 
+[[accessTransformers]]
+    file="META-INF/accesstransformer.cfg"
+
 [[dependencies.${mod_id}]]
     modId="neoforge"
     type="required"

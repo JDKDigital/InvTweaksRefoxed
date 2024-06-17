@@ -18,7 +18,7 @@ import java.util.List;
 
 public class PacketUpdateConfig implements CustomPacketPayload, IPayloadHandler<PacketUpdateConfig>
 {
-    public static final Type<PacketUpdateConfig> TYPE = new Type<>(new ResourceLocation(InvTweaksMod.MODID, "packet_update_config"));
+    public static final Type<PacketUpdateConfig> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(InvTweaksMod.MODID, "packet_update_config"));
     public static final StreamCodec<RegistryFriendlyByteBuf, PacketUpdateConfig> CODEC = new StreamCodec<>()
     {
         @Override

@@ -41,8 +41,8 @@ public class Category {
 
         String[] parts = clause.split(":", 2);
         if (parts[0].equals("/tag")) {
-            TagKey<Item> itemKey = TagKey.create(BuiltInRegistries.ITEM.key(), new ResourceLocation(parts[1]));
-            TagKey<Block> blockKey = TagKey.create(BuiltInRegistries.BLOCK.key(), new ResourceLocation(parts[1]));
+            TagKey<Item> itemKey = TagKey.create(BuiltInRegistries.ITEM.key(), ResourceLocation.parse(parts[1]));
+            TagKey<Block> blockKey = TagKey.create(BuiltInRegistries.BLOCK.key(), ResourceLocation.parse(parts[1]));
 
             return Optional.of(stack -> stack.is(itemKey) || (
                     stack.getItem() instanceof BlockItem blockItem
@@ -65,7 +65,7 @@ public class Category {
         } else { // default to standard item checking
             try {
                 return Optional.of(
-                        st -> Objects.equals(BuiltInRegistries.ITEM.getKey(st.getItem()), new ResourceLocation(clause)));
+                        st -> Objects.equals(BuiltInRegistries.ITEM.getKey(st.getItem()), ResourceLocation.parse(clause)));
             } catch (ResourceLocationException e) {
                 InvTweaksMod.LOGGER.warn("Invalid item resource location found.");
                 return Optional.empty();

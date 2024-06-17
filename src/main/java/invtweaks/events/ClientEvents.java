@@ -13,6 +13,7 @@ import invtweaks.util.ClientUtils;
 import invtweaks.util.Sorting;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
+import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
@@ -239,7 +240,7 @@ public class ClientEvents {
                 RenderSystem.enableBlend();
                 RenderSystem.defaultBlendFunc();
 
-                Minecraft.getInstance().gui.renderSlot(event.getGuiGraphics(), iprime, i2, Minecraft.getInstance().getFrameTime(), ent, toRender, 0);
+//                Minecraft.getInstance().gui.renderSlot(event.getGuiGraphics(), iprime, i2, DeltaTracker.ZERO, ent, toRender, 0);
 
                 RenderSystem.disableBlend();
             }
