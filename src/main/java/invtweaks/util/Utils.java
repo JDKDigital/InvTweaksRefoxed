@@ -2,16 +2,24 @@ package invtweaks.util;
 
 import com.google.common.base.Equivalence;
 import com.google.common.collect.Streams;
+import invtweaks.InvTweaksMod;
 import it.unimi.dsi.fastutil.ints.IntArrays;
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.world.Container;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.items.ItemHandlerHelper;
 import net.neoforged.neoforge.items.ItemStackHandler;
+import net.neoforged.neoforge.items.wrapper.InvWrapper;
 
 
+import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.*;
 import java.util.function.Supplier;
@@ -20,10 +28,6 @@ import java.util.stream.IntStream;
 
 
 public class Utils {
-    private Utils() {
-        // nothing to do
-    }
-
     public static final Equivalence<ItemStack> STACKABLE =
             new Equivalence<>()
             {
@@ -193,5 +197,22 @@ public class Utils {
                 .mapToObj(stackBuffer::getStackInSlot)
                 .filter(is -> !is.isEmpty())
                 .collect(Collectors.toCollection(ArrayList::new));
+    }
+
+
+    public static boolean isPlayerContainer(Container container, AbstractContainerScreen<?> screen, @Nullable Player player) {
+        Slot slot = screen.getSlotUnderMouse();
+//        for (int i = 0; i < container.getContainerSize(); i++) {
+//            InvTweaksMod.LOGGER.info("slot " + i + " contains " + container.getItem(i));
+//        }
+        if (slot != null) {
+            if (slot.container instanceof InvWrapper invWrapper) {
+                return invWrapper.getInv() instanceof Inventory;
+            }
+            if (slot.container instanceof Inventory) {
+                return true;
+            }
+        }
+        return false;
     }
 }

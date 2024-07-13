@@ -1,10 +1,8 @@
 package invtweaks;
 
 import invtweaks.config.InvTweaksConfig;
-import invtweaks.network.NetworkDispatcher;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
-import net.neoforged.fml.ModLoadingContext;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.config.ModConfig;
 import net.neoforged.fml.loading.FMLPaths;

@@ -4,6 +4,7 @@ import com.google.common.base.Equivalence;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import com.google.common.collect.Streams;
+import invtweaks.InvTweaksMod;
 import invtweaks.config.Category;
 import invtweaks.config.ContOverride;
 import invtweaks.config.InvTweaksConfig;
@@ -18,6 +19,7 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
+import net.neoforged.neoforge.items.SlotItemHandler;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.*;
@@ -27,11 +29,8 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 public class Sorting {
-    private Sorting() {
-        // nothing to do
-    }
-
     public static void executeSort(Player player, boolean isPlayerSort, String screenClass) {
+        InvTweaksMod.LOGGER.debug("opened screen: " + screenClass);
         if (isPlayerSort) {
             Map<String, Category> cats = InvTweaksConfig.getPlayerCats(player);
             Ruleset rules = InvTweaksConfig.getPlayerRules(player);
@@ -63,11 +62,8 @@ public class Sorting {
                                     .filter(idx -> 0 <= idx && idx < cont.slots.size())
                                     .mapToObj(cont.slots::get)
                                     : cont.slots.stream())
-                                    .filter(slot -> !(slot.container instanceof Inventory))
-                                    .filter(
-                                            slot ->
-                                                    (slot.mayPickup(player) && slot.mayPlace(slot.getItem()))
-                                                            || !slot.hasItem())
+                                    .filter(slot -> (slot instanceof SlotItemHandler || slot.container.getContainerSize() > 0) && !(slot.container instanceof Inventory))
+                                    .filter(slot -> (slot.mayPickup(player) && slot.mayPlace(slot.getItem())) || !slot.hasItem())
                                     .collect(Collectors.toCollection(ArrayList::new));
 
                     if (player instanceof ServerPlayer serverPlayer) {

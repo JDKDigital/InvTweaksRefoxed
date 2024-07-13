@@ -68,6 +68,9 @@ public class InvTweaksConfig {
                     .put("tfar.dankstorage.container.DankContainers", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE,""))
                     .put("mcjty.rftoolsutility.modules.crafter.blocks.CrafterContainer", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""))
                     .put("gripe._90.megacells.menu.MEGAInterfaceMenu", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""))
+                    .put("com.direwolf20.laserio.client.screens.*", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""))
+                    .put("cofh.thermal.core.client.gui.*", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""))
+                    .put("ironfurnaces.gui.furnaces.*", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, "0-45"))
 
                     .build();
 
@@ -250,7 +253,7 @@ public class InvTweaksConfig {
                         .build();
 
         configData.load();
-        spec.setConfig(configData);
+        spec.correct(configData);
     }
 
     public static void setPlayerCats(Player ent, Map<String, Category> cats) {

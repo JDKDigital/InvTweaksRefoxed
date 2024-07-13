@@ -11,6 +11,7 @@ import invtweaks.gui.InvTweaksButtonSort;
 import invtweaks.network.PacketSortInv;
 import invtweaks.util.ClientUtils;
 import invtweaks.util.Sorting;
+import invtweaks.util.Utils;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import net.minecraft.client.DeltaTracker;
@@ -33,6 +34,7 @@ import net.neoforged.neoforge.client.event.RenderGuiLayerEvent;
 import net.neoforged.neoforge.client.event.ScreenEvent;
 import net.neoforged.neoforge.client.gui.VanillaGuiLayers;
 import net.neoforged.neoforge.items.ItemHandlerHelper;
+import net.neoforged.neoforge.items.wrapper.InvWrapper;
 import net.neoforged.neoforge.network.PacketDistributor;
 
 import javax.annotation.Nullable;
@@ -148,21 +150,23 @@ public class ClientEvents {
     @SubscribeEvent
     public static void onKeyPressed(ScreenEvent.KeyPressed.Pre event) {
         if (event.getScreen() instanceof AbstractContainerScreen<?> screen && !(screen instanceof CreativeModeInventoryScreen) && !(screen.getFocused() instanceof EditBox) && !isJEIKeyboardActive()) {
-            if (InvTweaksConfig.isSortEnabled(true)
-                    && KeyMappings.SORT_PLAYER.isActiveAndMatches(
-                            InputConstants.getKey(event.getKeyCode(), event.getScanCode()))) {
+            if (
+                    InvTweaksConfig.isSortEnabled(true) &&
+                    KeyMappings.SORT_PLAYER.isActiveAndMatches(InputConstants.getKey(event.getKeyCode(), event.getScanCode()))
+            ) {
                 requestSort(true, screen.getClass().getName());
             }
-            if (InvTweaksConfig.isSortEnabled(false)
-                    && screensWithExtSort.contains(event.getScreen())
-                    && KeyMappings.SORT_INVENTORY.isActiveAndMatches(
-                            InputConstants.getKey(event.getKeyCode(), event.getScanCode()))) {
+            if (
+                    InvTweaksConfig.isSortEnabled(false) &&
+                    screensWithExtSort.contains(event.getScreen()) &&
+                    KeyMappings.SORT_INVENTORY.isActiveAndMatches(InputConstants.getKey(event.getKeyCode(), event.getScanCode()))
+            ) {
                 requestSort(false, screen.getClass().getName());
             }
 
             Slot slot = screen.getSlotUnderMouse();
             if (slot != null) {
-                boolean isPlayerSort = slot.container instanceof Inventory;
+                boolean isPlayerSort = Utils.isPlayerContainer(slot.container, screen, Minecraft.getInstance().player);;
                 if (InvTweaksConfig.isSortEnabled(isPlayerSort)
                         && (isPlayerSort || screensWithExtSort.contains(event.getScreen()))
                         && KeyMappings.SORT_EITHER.isActiveAndMatches(
@@ -182,14 +186,13 @@ public class ClientEvents {
     @SubscribeEvent
     public static void onMouseButtonPressed(ScreenEvent.MouseButtonPressed.Pre event) {
         if (event.getScreen() instanceof AbstractContainerScreen<?> screen && !(event.getScreen() instanceof CreativeModeInventoryScreen)) {
-            boolean isMouseActive = KeyMappings.SORT_EITHER.getKeyConflictContext().isActive()
-                                    && KeyMappings.SORT_EITHER.matchesMouse(event.getButton());
+            boolean isMouseActive = KeyMappings.SORT_EITHER.getKeyConflictContext().isActive() && KeyMappings.SORT_EITHER.matchesMouse(event.getButton());
             if (!isMouseActive) return;
+
             Slot slot = screen.getSlotUnderMouse();
             if (slot != null) {
-                boolean isPlayerSort = slot.container instanceof Inventory;
-                if (InvTweaksConfig.isSortEnabled(isPlayerSort)
-                        && (isPlayerSort || screensWithExtSort.contains(event.getScreen()))) {
+                boolean isPlayerSort = Utils.isPlayerContainer(slot.container, screen, Minecraft.getInstance().player);
+                if (InvTweaksConfig.isSortEnabled(isPlayerSort) && (isPlayerSort || screensWithExtSort.contains(event.getScreen()))) {
                     requestSort(isPlayerSort, screen.getClass().getName());
                     event.setCanceled(true); // stop pick block event
                 }
@@ -223,12 +226,7 @@ public class ClientEvents {
             HumanoidArm dominantHand = ent.getMainArm();
             int i = Minecraft.getInstance().getWindow().getGuiScaledWidth() / 2;
             int i2 = Minecraft.getInstance().getWindow().getGuiScaledHeight() - 16 - 3;
-            int iprime;
-            if (dominantHand == HumanoidArm.RIGHT) {
-                iprime = i + 91 + 10;
-            } else {
-                iprime = i - 91 - 26;
-            }
+            int prime = dominantHand == HumanoidArm.RIGHT ? i + 91 + 10 : i - 91 - 26;
             int itemCount = IntStream.range(0, ent.getInventory().items.size()).filter(idx -> Collections.binarySearch(frozen, idx) < 0).mapToObj(ent.getInventory().items::get).filter(st -> ItemStack.isSameItemSameComponents(st, ent.getMainHandItem())).mapToInt(ItemStack::getCount).sum();
 
             if (itemCount > ent.getMainHandItem().getCount()) {
@@ -240,7 +238,7 @@ public class ClientEvents {
                 RenderSystem.enableBlend();
                 RenderSystem.defaultBlendFunc();
 
-//                Minecraft.getInstance().gui.renderSlot(event.getGuiGraphics(), iprime, i2, DeltaTracker.ZERO, ent, toRender, 0);
+                Minecraft.getInstance().gui.renderSlot(event.getGuiGraphics(), prime, i2, DeltaTracker.ZERO, ent, toRender, 0);
 
                 RenderSystem.disableBlend();
             }

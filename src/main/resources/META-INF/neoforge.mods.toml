@@ -30,7 +30,7 @@ issueTrackerURL="https://github.com/JDKDigital/InvTweaksRefoxed/issues"
     type="required"
     versionRange="${neo_version_range}"
     ordering="NONE"
-    side="BOTH"
+    side="CLIENT"
 [[dependencies.${mod_id}]]
     modId="minecraft"
     type="required"

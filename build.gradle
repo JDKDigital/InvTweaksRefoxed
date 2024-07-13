@@ -3,7 +3,7 @@ plugins {
     id 'idea'
     id 'maven-publish'
     id 'org.gradle.crypto.checksum' version '1.4.0'
-    id 'net.neoforged.gradle.userdev' version '7.0.142'
+    id 'net.neoforged.gradle.userdev' version '7.0.146'
 }
 
 java.toolchain.languageVersion = JavaLanguageVersion.of(21)
@@ -78,7 +78,9 @@ repositories {
 dependencies {
     implementation "net.neoforged:neoforge:${neo_version}"
 
-    implementation "curse.maven:jei-238222:5437447"
+    implementation "curse.maven:jei-238222:5525108"
+    implementation "curse.maven:productivebees-377897:5512587"
+    implementation "curse.maven:iron-furnaces-237664:5489826"
 }
 
 tasks.withType(ProcessResources).configureEach {
