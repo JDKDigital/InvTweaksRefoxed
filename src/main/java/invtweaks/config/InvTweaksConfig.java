@@ -58,6 +58,7 @@ public class InvTweaksConfig {
                     .put("appeng.client.gui.implementations.*Screen", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""))
                     .put("appeng.client.gui.me.items.*Screen", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""))
                     .put("de.mari_023.ae2wtlib.wct.*Screen", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""))
+                    .put("de.mari_023.ae2wtlib.wet.*Screen", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""))
                     .put("com.github.glodblock.epp.client.gui.*", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""))
                     .put("org.cyclops.integrateddynamics.inventory.container.*", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""))
                     .put("org.cyclops.integratedterminals.inventory.container.ContainerTerminalStoragePart", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""))
