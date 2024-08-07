@@ -30,7 +30,9 @@ import java.util.stream.Stream;
 
 public class Sorting {
     public static void executeSort(Player player, boolean isPlayerSort, String screenClass) {
-        InvTweaksMod.LOGGER.debug("opened screen: " + screenClass);
+        if (InvTweaksConfig.isDebugEnabled()) {
+            InvTweaksMod.LOGGER.debug("screen: " + screenClass);
+        }
         if (isPlayerSort) {
             Map<String, Category> cats = InvTweaksConfig.getPlayerCats(player);
             Ruleset rules = InvTweaksConfig.getPlayerRules(player);

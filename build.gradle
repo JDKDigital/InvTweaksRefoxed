@@ -81,6 +81,7 @@ dependencies {
     implementation "curse.maven:jei-238222:5525108"
     implementation "curse.maven:productivebees-377897:5512587"
     implementation "curse.maven:iron-furnaces-237664:5489826"
+    implementation "curse.maven:just-dire-things-1002348:5529221"
 }
 
 tasks.withType(ProcessResources).configureEach {

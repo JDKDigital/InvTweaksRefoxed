@@ -71,17 +71,18 @@ public class InvTweaksConfig {
                     .put("com.direwolf20.laserio.client.screens.*", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""))
                     .put("cofh.thermal.core.client.gui.*", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""))
                     .put("ironfurnaces.gui.furnaces.*", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, "0-45"))
-
+                    .put("com.direwolf20.justdirethings.client.screens.*", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""))
+                    .put("com.glodblock.github.extendedae.client.gui.*", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""))
                     .build();
 
     private static final ModConfigSpec.ConfigValue<List<? extends UnmodifiableConfig>> CATS;
     private static final ModConfigSpec.ConfigValue<List<? extends String>> RULES;
+    private static final ModConfigSpec.BooleanValue ENABLE_DEBUG;
     private static final ModConfigSpec.BooleanValue ENABLE_AUTOREFILL;
     private static final ModConfigSpec.BooleanValue ENABLE_QUICKVIEW;
     private static final ModConfigSpec.IntValue ENABLE_SORT;
     private static final ModConfigSpec.IntValue ENABLE_BUTTONS;
-    private static final ModConfigSpec.ConfigValue<List<? extends UnmodifiableConfig>>
-            CONT_OVERRIDES;
+    private static final ModConfigSpec.ConfigValue<List<? extends UnmodifiableConfig>> CONT_OVERRIDES;
     private static final Map<UUID, Map<String, Category>> playerToCats = new HashMap<>();
     private static final Map<UUID, Ruleset> playerToRules = new HashMap<>();
     private static final Set<UUID> playerAutoRefill = new HashSet<>();
@@ -166,6 +167,7 @@ public class InvTweaksConfig {
         {
             builder.comment("Tweaks").push("tweaks");
 
+            ENABLE_DEBUG = builder.comment("Enable debug will log the name of the screens being opened").define("enableDebug", false);
             ENABLE_AUTOREFILL = builder.comment("Enable auto-refill").define("autoRefill", true);
             ENABLE_QUICKVIEW =
                     builder
@@ -331,6 +333,10 @@ public class InvTweaksConfig {
 
     public static boolean isQuickViewEnabled() {
         return ENABLE_QUICKVIEW.get();
+    }
+
+    public static boolean isDebugEnabled() {
+        return ENABLE_DEBUG.get();
     }
 
     public static Map<String, Category> cfgToCompiledCats(List<UnmodifiableConfig> lst) {

@@ -202,9 +202,6 @@ public class Utils {
 
     public static boolean isPlayerContainer(Container container, AbstractContainerScreen<?> screen, @Nullable Player player) {
         Slot slot = screen.getSlotUnderMouse();
-//        for (int i = 0; i < container.getContainerSize(); i++) {
-//            InvTweaksMod.LOGGER.info("slot " + i + " contains " + container.getItem(i));
-//        }
         if (slot != null) {
             if (slot.container instanceof InvWrapper invWrapper) {
                 return invWrapper.getInv() instanceof Inventory;
