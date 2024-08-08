@@ -58,6 +58,7 @@ public class InvTweaksConfig {
                     .put("appeng.client.gui.implementations.*Screen", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""))
                     .put("appeng.client.gui.me.items.*Screen", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""))
                     .put("de.mari_023.ae2wtlib.wct.*Screen", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""))
+                    .put("de.mari_023.ae2wtlib.wet.*Screen", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""))
                     .put("com.github.glodblock.epp.client.gui.*", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""))
                     .put("org.cyclops.integrateddynamics.inventory.container.*", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""))
                     .put("org.cyclops.integratedterminals.inventory.container.ContainerTerminalStoragePart", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""))
@@ -73,6 +74,8 @@ public class InvTweaksConfig {
                     .put("ironfurnaces.gui.furnaces.*", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, "0-45"))
                     .put("com.direwolf20.justdirethings.client.screens.*", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""))
                     .put("com.glodblock.github.extendedae.client.gui.*", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""))
+                    .put("cy.jdkdigital.productivebees.container.gui.*", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""))
+                    .put("cy.jdkdigital.productivetrees.inventory.screen.*", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""))
                     .build();
 
     private static final ModConfigSpec.ConfigValue<List<? extends UnmodifiableConfig>> CATS;
