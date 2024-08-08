@@ -192,7 +192,7 @@ public class ClientEvents {
             Slot slot = screen.getSlotUnderMouse();
             if (slot != null) {
                 // Disable sort if in creative and has clicked a non-empty slot
-                if (Minecraft.getInstance().player.isCreative() && slot.hasItem()) {
+                if (Minecraft.getInstance().player != null && Minecraft.getInstance().player.hasInfiniteMaterials() && !slot.getItem().isEmpty()) {
                     return;
                 }
                 boolean isPlayerSort = Utils.isPlayerContainer(slot.container, screen, Minecraft.getInstance().player);
