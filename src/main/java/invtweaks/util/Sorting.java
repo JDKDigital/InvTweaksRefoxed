@@ -30,7 +30,7 @@ import java.util.stream.Stream;
 
 public class Sorting {
     public static void executeSort(Player player, boolean isPlayerSort, String screenClass) {
-        if (InvTweaksConfig.isDebugEnabled()) {
+        if (player != null && player.level().isClientSide() && InvTweaksConfig.isDebugEnabled()) {
             InvTweaksMod.LOGGER.debug("screen: " + screenClass);
         }
         if (isPlayerSort) {

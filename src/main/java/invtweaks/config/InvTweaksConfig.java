@@ -339,7 +339,7 @@ public class InvTweaksConfig {
     }
 
     public static boolean isDebugEnabled() {
-        return ENABLE_DEBUG.get();
+        return CLIENT_CONFIG.isLoaded() && ENABLE_DEBUG.get();
     }
 
     public static Map<String, Category> cfgToCompiledCats(List<UnmodifiableConfig> lst) {
