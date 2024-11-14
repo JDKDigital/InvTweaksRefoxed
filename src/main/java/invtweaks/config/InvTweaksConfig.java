@@ -76,6 +76,7 @@ public class InvTweaksConfig {
                     .put("com.glodblock.github.extendedae.client.gui.*", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""))
                     .put("cy.jdkdigital.productivebees.container.gui.*", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""))
                     .put("cy.jdkdigital.productivetrees.inventory.screen.*", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""))
+                    .put("net.pedroksl.advanced_ae.client.gui.*", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""))
                     .build();
 
     private static final ModConfigSpec.ConfigValue<List<? extends UnmodifiableConfig>> CATS;
