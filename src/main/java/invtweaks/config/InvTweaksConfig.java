@@ -69,13 +69,15 @@ public class InvTweaksConfig {
                     .put("tfar.dankstorage.container.DankContainers", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE,""))
                     .put("mcjty.rftoolsutility.modules.crafter.blocks.CrafterContainer", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""))
                     .put("gripe._90.megacells.menu.MEGAInterfaceMenu", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""))
-                    .put("com.direwolf20.laserio.client.screens.*", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""))
                     .put("cofh.thermal.core.client.gui.*", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""))
                     .put("ironfurnaces.gui.furnaces.*", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, "0-45"))
                     .put("com.direwolf20.justdirethings.client.screens.*", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""))
+                    .put("com.direwolf20.laserio.client.screens.*", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""))
                     .put("com.glodblock.github.extendedae.client.gui.*", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""))
                     .put("cy.jdkdigital.productivebees.container.gui.*", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""))
                     .put("cy.jdkdigital.productivetrees.inventory.screen.*", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""))
+                    .put("com.stal111.forbidden_arcanus.client.gui.screen.*", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""))
+                    .put("aztech.modern_industrialization.*.gui.*Screen.java", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""))
                     .build();
 
     private static final ModConfigSpec.ConfigValue<List<? extends UnmodifiableConfig>> CATS;
