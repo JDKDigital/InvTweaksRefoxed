@@ -65,10 +65,7 @@ public class Sorting {
                                     .mapToObj(cont.slots::get)
                                     : cont.slots.stream())
                                     .filter(slot -> !(slot.container instanceof Inventory))
-                                    .filter(
-                                            slot ->
-                                                    (slot.mayPickup(player) && slot.mayPlace(slot.getItem()))
-                                                            || !slot.hasItem())
+                                    .filter(slot -> slot.mayPickup(player) && (slot.mayPlace(slot.getItem()) || !slot.hasItem()))
                                     .collect(Collectors.toCollection(ArrayList::new));
 
                     if (player instanceof ServerPlayer serverPlayer) {
