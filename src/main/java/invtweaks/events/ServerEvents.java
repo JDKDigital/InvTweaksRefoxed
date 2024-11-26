@@ -102,7 +102,7 @@ public class ServerEvents {
             TagKey<Item> finalAltTag = altTag;
             int alternativeSlot = -1;
             for (int i = 0; i < cap.getSlots(); ++i) {
-                if (Collections.binarySearch(frozen, i) >= 0) {
+                if (Collections.binarySearch(frozen, i) >= 0 || (i >= 36 && i <= 39)) {
                     continue; // ignore frozen slot
                 }
                 ItemStack candidate = cap.extractItem(i, Integer.MAX_VALUE, true).copy();
