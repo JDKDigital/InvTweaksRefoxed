@@ -30,7 +30,7 @@ import java.util.stream.Stream;
 
 public class Sorting {
     public static void executeSort(Player player, boolean isPlayerSort, String screenClass) {
-        if (player != null && player.level().isClientSide() && InvTweaksConfig.isDebugEnabled()) {
+        if (player != null && InvTweaksConfig.isDebugEnabled()) {
             InvTweaksMod.LOGGER.debug("screen: " + screenClass);
         }
         if (isPlayerSort) {
@@ -65,7 +65,7 @@ public class Sorting {
                                     .mapToObj(cont.slots::get)
                                     : cont.slots.stream())
                                     .filter(slot -> (slot instanceof SlotItemHandler || slot.container.getContainerSize() > 0) && !(slot.container instanceof Inventory))
-                                    .filter(slot -> (slot.mayPickup(player) && slot.mayPlace(slot.getItem())) || !slot.hasItem())
+                                    .filter(slot -> slot.mayPickup(player) && (slot.mayPlace(slot.getItem()) || !slot.hasItem()))
                                     .collect(Collectors.toCollection(ArrayList::new));
 
                     if (player instanceof ServerPlayer serverPlayer) {
@@ -263,7 +263,6 @@ public class Sorting {
         validSlots.forEach(slot -> slot.set(ItemStack.EMPTY));
         slotIt = validSlots.iterator();
         for (ItemStack stack : stacks) {
-            // System.out.println(i);
             Slot cur = null;
             while (slotIt.hasNext() && !(cur = slotIt.next()).mayPlace(stack)) {
                 assert true;
