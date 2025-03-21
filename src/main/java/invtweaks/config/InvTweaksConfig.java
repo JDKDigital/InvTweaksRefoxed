@@ -78,6 +78,14 @@ public class InvTweaksConfig {
                     .put("cy.jdkdigital.productivetrees.inventory.screen.*", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""))
                     .put("com.stal111.forbidden_arcanus.client.gui.screen.*", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""))
                     .put("aztech.modern_industrialization.*.gui.*Screen.java", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""))
+                    .put("net.pedroksl.advanced_ae.client.gui.*", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""))
+                    .put("tv.soaryn.xycraft.*", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""))
+                    .put("com.mrbysco.forcecraft.menu.*", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""))
+                    .put("net.chococraft.forge.common.inventory.*", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""))
+                    .put("net.pedroksl.advanced_ae.client.gui.*", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""))
+                    .put("com.enderio.machines.common.blocks.*Menu", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""))
+                    .put("thedarkcolour.gendustry.menu.*", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""))
+                    .put("se.mickelus.tetra.blocks.workbench.*", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""))
                     .build();
 
     private static final ModConfigSpec.ConfigValue<List<? extends UnmodifiableConfig>> CATS;
