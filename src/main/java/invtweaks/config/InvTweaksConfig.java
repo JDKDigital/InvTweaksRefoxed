@@ -82,7 +82,6 @@ public class InvTweaksConfig {
                     .put("tv.soaryn.xycraft.*", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""))
                     .put("com.mrbysco.forcecraft.menu.*", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""))
                     .put("net.chococraft.forge.common.inventory.*", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""))
-                    .put("net.pedroksl.advanced_ae.client.gui.*", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""))
                     .put("com.enderio.machines.common.blocks.*Menu", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""))
                     .put("thedarkcolour.gendustry.menu.*", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""))
                     .put("se.mickelus.tetra.blocks.workbench.*", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""))
