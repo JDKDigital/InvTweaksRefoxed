@@ -101,6 +101,7 @@ public class InvTweaksConfig {
     private static final Map<UUID, Map<String, ContOverride>> playerToContOverrides = new HashMap<>();
     private static Map<String, Category> COMPILED_CATS = DEFAULT_CATS;
     private static Ruleset COMPILED_RULES = DEFAULT_RULES;
+    public static Map<String, ContOverride> IMS_CONT_OVERRIDES = new HashMap<>();
     private static Map<String, ContOverride> COMPILED_CONT_OVERRIDES = DEFAULT_CONT_OVERRIDES;
     private static boolean isDirty = false;
 
@@ -243,6 +244,9 @@ public class InvTweaksConfig {
             COMPILED_CATS = cfgToCompiledCats((List<UnmodifiableConfig>) CATS.get());
             COMPILED_RULES = new Ruleset((List<String>) RULES.get());
             COMPILED_CONT_OVERRIDES = cfgToCompiledContOverrides((List<UnmodifiableConfig>) CONT_OVERRIDES.get());
+            IMS_CONT_OVERRIDES.forEach((s, contOverride) -> {
+                COMPILED_CONT_OVERRIDES.putIfAbsent(s, contOverride);
+            });
         }
     }
 

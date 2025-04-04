@@ -10,3 +10,9 @@ Features:
 - Inventory Sorting
 - Quick view of item quantities
 
+
+## Mod compatibility
+
+Mods can blacklist their own screens from sorting with an InterModComms message
+
+``InterModComms.sendTo("invtweaks", "blacklist-screen", () -> "net.minecraft.client.gui.screens.*");``
