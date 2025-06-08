@@ -16,7 +16,8 @@ public class NetworkDispatcher {
     public static void register(final RegisterPayloadHandlersEvent event) {
         final PayloadRegistrar registrar = event.registrar(InvTweaksMod.MODID);
 
-        registrar.playToServer(PacketSortInv.TYPE, PacketSortInv.CODEC, (payload, context) -> payload.handle(payload, context));
-        registrar.playToServer(PacketUpdateConfig.TYPE, PacketUpdateConfig.CODEC, (payload, context) -> payload.handle(payload, context));
+        registrar.optional()
+                .playToServer(PacketSortInv.TYPE, PacketSortInv.CODEC, (payload, context) -> payload.handle(payload, context))
+                .playToServer(PacketUpdateConfig.TYPE, PacketUpdateConfig.CODEC, (payload, context) -> payload.handle(payload, context));
     }
 }

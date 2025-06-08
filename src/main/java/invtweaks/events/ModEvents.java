@@ -19,7 +19,6 @@ public class ModEvents
                     InvTweaksConfig.IMS_CONT_OVERRIDES.put(imcMessage.messageSupplier().get().toString(), new ContOverride(InvTweaksConfig.NO_POS_OVERRIDE, InvTweaksConfig.NO_POS_OVERRIDE, ""));
                 }
             }
-            InvTweaksConfig.setDirty(true);
         });
     }
 }
