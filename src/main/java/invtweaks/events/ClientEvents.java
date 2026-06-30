@@ -209,33 +209,37 @@ public class ClientEvents {
             }
 
             Ruleset rules = InvTweaksConfig.getSelfCompiledRules();
-            IntList frozen =
+            
+            // OPTIMIERUNG: Nutze IntSet für O(1) Lookups statt sort() + binarySearch pro Frame
+            it.unimi.dsi.fastutil.ints.IntSet frozen =
                     Optional.ofNullable(rules.catToInventorySlots("/FROZEN"))
-                            .map(IntArrayList::new) // prevent modification
-                            .orElseGet(IntArrayList::new);
-            frozen.sort(null);
+                            .map(it.unimi.dsi.fastutil.ints.IntOpenHashSet::new)
+                            .orElseGet(it.unimi.dsi.fastutil.ints.IntOpenHashSet::new);
 
             assert ent != null;
-            if (Collections.binarySearch(frozen, ent.getInventory().selected) >= 0) {
+            if (frozen.contains(ent.getInventory().selected)) {
                 return;
             }
 
-            HumanoidArm dominantHand = ent.getMainArm();
             int i = Minecraft.getInstance().getWindow().getGuiScaledWidth() / 2;
             int i2 = Minecraft.getInstance().getWindow().getGuiScaledHeight() - 16 - 3;
             int iprime;
-            if (dominantHand == HumanoidArm.RIGHT) {
-                iprime = i + 91 + 10;
+            
+            // NEU: Seitenauswahl über Ihre Config-Option
+            if (InvTweaksConfig.isAlignRightEnabled()) {
+                iprime = i + 91 + 10; // Rechts neben der Hotbar
             } else {
-                iprime = i - 91 - 26;
+                iprime = i - 91 - 26; // Links neben der Hotbar
             }
+
             int itemCount =
                     IntStream.range(0, ent.getInventory().items.size())
-                            .filter(idx -> Collections.binarySearch(frozen, idx) < 0)
+                            .filter(idx -> !frozen.contains(idx)) // Optimierter Filter via Set
                             .mapToObj(ent.getInventory().items::get)
                             .filter(st -> ItemHandlerHelper.canItemStacksStack(st, ent.getMainHandItem()))
                             .mapToInt(ItemStack::getCount)
                             .sum();
+
             if (itemCount > ent.getMainHandItem().getCount()) {
                 ItemStack toRender = ent.getMainHandItem().copy();
                 toRender.setCount(itemCount);
