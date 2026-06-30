@@ -176,7 +176,11 @@ public class InvTweaksConfig {
             builder.pop();
         }
 
-        {
+private static final ForgeConfigSpec.BooleanValue ENABLE_QUICKVIEW;
+// 1. NEUE VARIABLE HINZUFÜGEN:
+private static final ForgeConfigSpec.BooleanValue ALIGN_RIGHT;
+
+{
             builder.comment("Tweaks").push("tweaks");
 
             ENABLE_AUTOREFILL = builder.comment("Enable auto-refill").define("autoRefill", true);
@@ -185,6 +189,14 @@ public class InvTweaksConfig {
                             .comment(
                                     "Enable a quick view of how many items that you're currently holding exists in your inventory by displaying it next your hotbar.")
                             .define("quickView", true);
+            
+            // 2. NEUE OPTION HIER EINFÜGEN:
+            ALIGN_RIGHT = 
+                    builder
+                            .comment(
+                                    "If quickView is enabled, true will show it on the right side of the hotbar, false on the left side.")
+                            .define("alignRight", true);
+
             ENABLE_SORT =
                     builder
                             .comment(
@@ -207,6 +219,16 @@ public class InvTweaksConfig {
 
         CLIENT_CONFIG = builder.build();
     }
+
+    public static boolean isQuickViewEnabled() {
+        return ENABLE_QUICKVIEW.get();
+    }
+
+    // 3. NEUE GETTER-METHODE HIER HINZUFÜGEN:
+    public static boolean isAlignRightEnabled() {
+        return ALIGN_RIGHT.get();
+    }
+
 
     @SuppressWarnings("unchecked")
     public static PacketUpdateConfig getSyncPacket() {
