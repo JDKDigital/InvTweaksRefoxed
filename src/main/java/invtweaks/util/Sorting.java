@@ -4,6 +4,7 @@ import com.google.common.base.Equivalence;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import com.google.common.collect.Streams;
+import invtweaks.InvTweaksMod;
 import invtweaks.config.Category;
 import invtweaks.config.ContOverride;
 import invtweaks.config.InvTweaksConfig;
@@ -33,6 +34,9 @@ public class Sorting {
     }
 
     public static void executeSort(Player player, boolean isPlayerSort, String screenClass) {
+        if (player != null && InvTweaksConfig.isDebugEnabled()) {
+            InvTweaksMod.LOGGER.debug("screen: " + screenClass);
+        }
         if (isPlayerSort) {
             Map<String, Category> cats = InvTweaksConfig.getPlayerCats(player);
             Ruleset rules = InvTweaksConfig.getPlayerRules(player);

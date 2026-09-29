@@ -79,17 +79,18 @@ public class ClientEvents {
     @SubscribeEvent
     public static void onScreenEventInit(ScreenEvent.Init.Post event) {
         if (event.getScreen() instanceof AbstractContainerScreen<?> screen && !(screen instanceof CreativeModeInventoryScreen)) {
+            ContOverride override = InvTweaksConfig.getPlayerContOverride(Minecraft.getInstance().player, screen.getClass().getName(), screen.getMenu().getClass().getName());
+            var isSortDisabled = Optional.ofNullable(override).filter(ContOverride::isSortDisabled).isPresent();
+
             // first, work with player inventory
             Slot placement = getDefaultButtonPlacement(screen.getMenu().slots, slot -> slot.container instanceof Inventory);
             if (placement != null
                     && InvTweaksConfig.isSortEnabled(true)
                     && InvTweaksConfig.isButtonEnabled(true)) {
                 try {
-                    event.addListener(
-                            new InvTweaksButtonSort(
-                                    screen.getGuiLeft() + placement.x + 17,
-                                    screen.getGuiTop() + placement.y,
-                                    btn -> requestSort(true, screen.getClass().getName())));
+                    int x = screen.getGuiLeft() + placement.x + 17 + (isSortDisabled ? override.getX() : 0);
+                    int y = screen.getGuiTop() + placement.y + (isSortDisabled ? override.getY() : 0);
+                    event.addListener(new InvTweaksButtonSort(x, y, btn -> requestSort(true, screen.getClass().getName())));
                 } catch (Exception e) {
                     Throwables.throwIfUnchecked(e);
                     throw new RuntimeException(e);
@@ -97,11 +98,7 @@ public class ClientEvents {
             }
 
             // then, work with external inventory
-            InvTweaksMod.LOGGER.info(screen.getClass().getName());
-            ContOverride override = InvTweaksConfig.getPlayerContOverride(Minecraft.getInstance().player, screen.getClass().getName(), screen.getMenu().getClass().getName());
-            var isSortDisabled = Optional.ofNullable(override).filter(ContOverride::isSortDisabled).isPresent();
-
-            if (!(screen instanceof EffectRenderingInventoryScreen) && !isSortDisabled) {
+            if (!isSortDisabled && !(screen instanceof EffectRenderingInventoryScreen)) {
                 int x = InvTweaksConfig.NO_POS_OVERRIDE, y = InvTweaksConfig.NO_POS_OVERRIDE;
                 if (override != null) {
                     x = override.getX();

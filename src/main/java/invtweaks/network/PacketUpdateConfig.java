@@ -81,7 +81,6 @@ public class PacketUpdateConfig {
                             InvTweaksConfig.setPlayerContOverrides(
                                     Objects.requireNonNull(ctx.get().getSender()),
                                     InvTweaksConfig.cfgToCompiledContOverrides(contOverrides));
-                            // InvTweaksMod.LOGGER.info("Received config from client!");
                         });
         ctx.get().setPacketHandled(true);
     }

@@ -85,10 +85,12 @@ public class InvTweaksConfig {
                     .put("com.direwolf20.laserio.client.screens.*", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""))
                     .put("com.stal111.forbidden_arcanus.client.gui.screen.*", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""))
                     .put("aztech.modern_industrialization.*.gui.*Screen", new ContOverride(NO_POS_OVERRIDE, NO_POS_OVERRIDE, ""))
+                    .put("slimeknights.tconstruct.smeltery.client.screen.HeatingStructureScreen", new ContOverride(41, 0, ""))
                     .build();
 
     private static final ForgeConfigSpec.ConfigValue<List<? extends UnmodifiableConfig>> CATS;
     private static final ForgeConfigSpec.ConfigValue<List<? extends String>> RULES;
+    private static final ForgeConfigSpec.BooleanValue ENABLE_DEBUG;
     private static final ForgeConfigSpec.BooleanValue ENABLE_AUTOREFILL;
     private static final ForgeConfigSpec.BooleanValue ENABLE_QUICKVIEW;
     private static final ForgeConfigSpec.IntValue ENABLE_SORT;
@@ -179,6 +181,7 @@ public class InvTweaksConfig {
         {
             builder.comment("Tweaks").push("tweaks");
 
+            ENABLE_DEBUG = builder.comment("Enable debug will log the name of the screens being opened").define("enableDebug", false);
             ENABLE_AUTOREFILL = builder.comment("Enable auto-refill").define("autoRefill", true);
             ENABLE_QUICKVIEW =
                     builder
@@ -344,6 +347,10 @@ public class InvTweaksConfig {
 
     public static boolean isQuickViewEnabled() {
         return ENABLE_QUICKVIEW.get();
+    }
+
+    public static boolean isDebugEnabled() {
+        return CLIENT_CONFIG.isLoaded() && ENABLE_DEBUG.get();
     }
 
     public static Map<String, Category> cfgToCompiledCats(List<UnmodifiableConfig> lst) {
